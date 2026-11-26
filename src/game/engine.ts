@@ -501,18 +501,31 @@ export class GameEngine {
       kind === 'frost_titan' ||
       kind === 'glacia_knight' ||
       kind === 'cocytus_core' ||
-      kind === 'glacies_emperor'
+      kind === 'glacies_emperor' ||
+      kind === 'scarlet_sentinel' ||
+      kind === 'ruby_executor' ||
+      kind === 'furnace_titan' ||
+      kind === 'scarlet_seraph' ||
+      kind === 'crimson_sovereign'
     ) {
       const maxHp =
-        kind === 'glacies_emperor' ? 18 : kind === 'overlord_core'
+        kind === 'crimson_sovereign'
+          ? 24
+          : kind === 'scarlet_seraph'
+            ? 22
+            : kind === 'glacies_emperor'
+              ? 18
+              : kind === 'furnace_titan'
+                ? 17
+                : kind === 'overlord_core'
                   ? 16
                   : kind === 'emerald_emperor' || kind === 'cocytus_core'
                     ? 15
-                    : kind === 'thunder_kronos'
+                    : kind === 'thunder_kronos' || kind === 'ruby_executor'
                       ? 14
                       : kind === 'jade_chimera' || kind === 'glacia_knight'
                         ? 13
-                        : kind === 'archmage' || kind === 'verdant_warden'
+                        : kind === 'archmage' || kind === 'verdant_warden' || kind === 'scarlet_sentinel'
                           ? 11
                           : kind === 'clockwork_core' || kind === 'frost_titan'
                             ? 10
@@ -522,33 +535,34 @@ export class GameEngine {
                                 ? 7
                                 : 6;
       const w =
-        kind === 'cocytus_core'
+        kind === 'crimson_sovereign' || kind === 'cocytus_core'
           ? 72
-          : kind === 'jade_chimera' || kind === 'glacies_emperor'
+          : kind === 'jade_chimera' || kind === 'glacies_emperor' || kind === 'furnace_titan'
             ? 70
-            : kind === 'emerald_emperor'
+            : kind === 'emerald_emperor' || kind === 'scarlet_seraph'
               ? 66
-              : kind === 'clockwork_core' || kind === 'verdant_warden'
+              : kind === 'clockwork_core' || kind === 'verdant_warden' || kind === 'ruby_executor'
                 ? 64
                 : kind === 'thunder_kronos'
                   ? 60
-                  : kind === 'overlord_core' || kind === 'frost_titan' || kind === 'glacia_knight'
+                  : kind === 'overlord_core' || kind === 'frost_titan' || kind === 'glacia_knight' || kind === 'scarlet_sentinel'
                     ? 58
                     : kind === 'iron_goliath' || kind === 'volt_centurion' || kind === 'emerald_stalker'
                       ? 56
                       : 52;
       const h =
-        kind === 'glacies_emperor'
+        kind === 'glacies_emperor' || kind === 'crimson_sovereign'
           ? 76
-          : kind === 'verdant_warden' || kind === 'emerald_emperor'
+          : kind === 'verdant_warden' || kind === 'emerald_emperor' || kind === 'furnace_titan' || kind === 'scarlet_seraph'
             ? 74
-            : kind === 'frost_titan' || kind === 'glacia_knight'
+            : kind === 'frost_titan' || kind === 'glacia_knight' || kind === 'ruby_executor'
               ? 72
               : kind === 'thunder_kronos' ||
                   kind === 'iron_goliath' ||
                   kind === 'volt_centurion' ||
                   kind === 'emerald_stalker' ||
-                  kind === 'cocytus_core'
+                  kind === 'cocytus_core' ||
+                  kind === 'scarlet_sentinel'
                 ? 68
                 : kind === 'jade_chimera'
                   ? 62
@@ -559,7 +573,10 @@ export class GameEngine {
         kind === 'emerald_stalker' ||
         kind === 'verdant_warden' ||
         kind === 'frost_titan' ||
-        kind === 'glacia_knight';
+        kind === 'glacia_knight' ||
+        kind === 'scarlet_sentinel' ||
+        kind === 'ruby_executor' ||
+        kind === 'furnace_titan';
       stage.boss = {
         kind,
         x: 620,
@@ -577,7 +594,7 @@ export class GameEngine {
         active: true,
         defeated: false,
         state:
-          kind === 'verdant_warden'
+          kind === 'verdant_warden' || kind === 'ruby_executor'
             ? 'patrol'
             : kind === 'jade_chimera'
               ? 'glide'
@@ -667,7 +684,13 @@ export class GameEngine {
     if (
       this.level.theme === 'arcane_library' ||
       this.level.theme === 'sky_hologram' ||
-      this.level.theme === 'secret_vault'
+      this.level.theme === 'secret_vault' ||
+      this.level.theme === 'crimson_bastion' ||
+      this.level.theme === 'magma_foundry' ||
+      this.level.theme === 'ruby_rail' ||
+      this.level.theme === 'scarlet_cathedral' ||
+      this.level.theme === 'danmaku_sanctum' ||
+      this.level.theme === 'inferno_citadel'
     ) {
       for (let i = 0; i < 48; i++) {
         this.libraryMotes.push({
@@ -1198,6 +1221,7 @@ export class GameEngine {
       if (p.oneWay) continue;
       if (p.switchGroup && !this.isSwitchGroupActive(p.switchGroup)) continue;
       if (p.style === 'vanish_holo' && p.vanishState === 'gone') continue;
+      if (p.style === 'ember_vanish' && p.vanishState === 'gone') continue;
       if (this.rectsOverlap(testBox.x, testBox.y, testBox.w, testBox.h, p.x, p.y, p.w, p.h)) {
         return;
       }
@@ -1813,6 +1837,306 @@ export class GameEngine {
       }
     }
 
+    // World 5 Scarlet Directional Cannon-Slings (5-1 / 5-4 / 5-7)
+    for (const ss of this.level.scarletSlings ?? []) {
+      if (ss.cooldown && ss.cooldown > 0) ss.cooldown = Math.max(0, ss.cooldown - dt);
+      if ((!ss.cooldown || ss.cooldown <= 0) && Math.hypot(pcx - ss.x, pcy - ss.y) <= ss.r + 18) {
+        ss.cooldown = 0.55;
+        this.endSlideIfClear();
+        p.grindingRail = null;
+        p.grabbedVine = null;
+        p.vx = ss.launchVx;
+        p.vy = ss.launchVy;
+        p.onGround = false;
+        p.airJumpsLeft = 1;
+        p.facing = ss.launchVx >= 0 ? 1 : -1;
+        p.scaleX = 0.78;
+        p.scaleY = 1.28;
+        this.score += 180;
+        this.addShake(3.2, 0.12);
+        sound.playJump(true);
+        this.addFloatingText(ss.x, ss.y - 20, 'SCARLET SLING!', '#fb7185');
+        this.particles.push({
+          x: ss.x,
+          y: ss.y,
+          vx: 0,
+          vy: 0,
+          size: 24,
+          color: '#f43f5e',
+          alpha: 1,
+          life: 0.32,
+          maxLife: 0.32,
+          gravity: 0,
+          glow: true,
+          ring: true,
+        });
+        this.spawnParticles(ss.x, ss.y, 16, {
+          color: '#fb7185',
+          speedMin: 70,
+          speedMax: 225,
+          angleMin: 0,
+          angleMax: Math.PI * 2,
+          size: 3.2,
+          life: 0.34,
+          gravity: 40,
+          glow: true,
+        });
+      }
+    }
+  }
+
+  private togglePhaseWater(pw: PhaseWaterSwitchDef) {
+    pw.cooldown = 0.48;
+    sound.playSwitchActivate();
+    this.addFloatingText(pw.x, pw.y - 18, 'CRYO PHASE SHIFT!', '#7dd3fc');
+    for (const plat of this.level.platforms) {
+      if (plat.style !== 'freeze_water') continue;
+      plat.waterState = plat.waterState === 'ice' ? 'liquid' : 'ice';
+      if (
+        plat.waterState === 'ice' &&
+        this.rectsOverlap(this.player.x, this.player.y, this.player.w, this.player.h, plat.x, plat.y, plat.w, plat.h)
+      ) {
+        this.player.y = plat.y - this.player.h;
+        this.player.vy = Math.min(0, this.player.vy);
+      }
+    }
+    this.spawnParticles(pw.x, pw.y, 14, {
+      color: '#bae6fd',
+      speedMin: 45,
+      speedMax: 155,
+      angleMin: 0,
+      angleMax: Math.PI * 2,
+      size: 3,
+      life: 0.32,
+      gravity: 20,
+      glow: true,
+    });
+  }
+
+  private updateCrumbleIce(dt: number) {
+    for (const p of this.level.platforms) {
+      if (p.style !== 'crumble_ice') continue;
+      if (p.crumbleState === 'cracking') {
+        p.crumbleTimer = (p.crumbleTimer ?? 0) - dt;
+        if ((p.crumbleTimer ?? 0) <= 0) {
+          p.crumbleState = 'gone';
+          p.crumbleTimer = 2.35;
+          this.spawnParticles(p.x + p.w * 0.5, p.y + 7, 12, {
+            color: '#bae6fd',
+            speedMin: 40,
+            speedMax: 140,
+            angleMin: 0,
+            angleMax: Math.PI * 2,
+            size: 3,
+            life: 0.36,
+            gravity: 220,
+            glow: true,
+          });
+        }
+      } else if (p.crumbleState === 'gone') {
+        p.crumbleTimer = (p.crumbleTimer ?? 0) - dt;
+        if ((p.crumbleTimer ?? 0) <= 0) {
+          p.crumbleState = 'solid';
+          p.crumbleTimer = 0;
+        }
+      }
+    }
+  }
+
+  private updateVanishPlatforms(dt: number) {
+    for (const p of this.level.platforms) {
+      if (p.style !== 'vanish_holo' && p.style !== 'ember_vanish') continue;
+      const isEmber = p.style === 'ember_vanish';
+      if (p.vanishState === 'warning') {
+        p.vanishTimer = (p.vanishTimer ?? 0) - dt;
+        if (Math.random() < 0.35) {
+          this.spawnParticles(p.x + Math.random() * p.w, p.y, 1, {
+            color: isEmber ? '#fb7185' : '#38f2ff',
+            speedMin: 20,
+            speedMax: 65,
+            angleMin: -Math.PI,
+            angleMax: 0,
+            size: 2.4,
+            life: 0.2,
+            gravity: -30,
+            glow: true,
+          });
+        }
+        if ((p.vanishTimer ?? 0) <= 0) {
+          p.vanishState = 'gone';
+          p.vanishTimer = isEmber ? 1.85 : 2.1;
+          this.spawnParticles(p.x + p.w * 0.5, p.y + 7, 12, {
+            color: isEmber ? '#f43f5e' : '#38f2ff',
+            speedMin: 35,
+            speedMax: 130,
+            angleMin: 0,
+            angleMax: Math.PI * 2,
+            size: 2.8,
+            life: 0.32,
+            gravity: 40,
+            glow: true,
+          });
+        }
+      } else if (p.vanishState === 'gone') {
+        p.vanishTimer = (p.vanishTimer ?? 0) - dt;
+        if ((p.vanishTimer ?? 0) <= 0) {
+          p.vanishState = 'solid';
+          p.vanishTimer = 0;
+        }
+      }
+    }
+  }
+
+  private updateMirrors(dt: number) {
+    for (const m of this.level.mirrors) {
+      if (m.cooldown > 0) m.cooldown = Math.max(0, m.cooldown - dt);
+    }
+  }
+
+  private getFloatBubblePos(fb: FloatBubbleDef): { x: number; y: number; dx: number; dy: number } {
+    const rec = this.bubbleMotion.get(fb);
+    if (rec) return { x: rec.x, y: rec.y, dx: rec.x - rec.prevX, dy: rec.y - rec.prevY };
+    const ampX = fb.ampX ?? 0;
+    const ampY = fb.ampY ?? 14;
+    const spd = fb.speed ?? 1.5;
+    return {
+      x: fb.x + Math.sin(this.worldTime * spd + fb.phase) * ampX,
+      y: fb.y + Math.cos(this.worldTime * spd + fb.phase) * ampY,
+      dx: 0,
+      dy: 0,
+    };
+  }
+
+  private updateFloatBubbles(dt: number) {
+    for (const fb of this.level.floatBubbles) {
+      const prevRec = this.bubbleMotion.get(fb);
+      const ampX = fb.ampX ?? 0;
+      const ampY = fb.ampY ?? 14;
+      const spd = fb.speed ?? 1.5;
+      const nx = fb.x + Math.sin(this.worldTime * spd + fb.phase) * ampX;
+      const ny = fb.y + Math.cos(this.worldTime * spd + fb.phase) * ampY;
+      this.bubbleMotion.set(fb, {
+        prevX: prevRec ? prevRec.x : nx,
+        prevY: prevRec ? prevRec.y : ny,
+        x: nx,
+        y: ny,
+      });
+
+      if (fb.popped) {
+        fb.respawnTimer = (fb.respawnTimer ?? 2.0) - dt;
+        if ((fb.respawnTimer ?? 0) <= 0) {
+          fb.popped = false;
+          fb.standTimer = 0;
+        }
+      } else if (this.player.standingBubble === fb) {
+        fb.standTimer = (fb.standTimer ?? 0) + dt;
+        if (Math.random() < 0.28) {
+          this.spawnParticles(nx, ny - fb.r, 1, {
+            color: '#6ee7b7',
+            speedMin: 18,
+            speedMax: 55,
+            angleMin: -Math.PI,
+            angleMax: 0,
+            size: 2.4,
+            life: 0.25,
+            gravity: -20,
+            glow: true,
+          });
+        }
+        if ((fb.standTimer ?? 0) >= 1.45) {
+          fb.popped = true;
+          fb.respawnTimer = 2.05;
+          fb.standTimer = 0;
+          this.player.standingBubble = null;
+          this.player.onGround = false;
+          sound.playSwitchActivate();
+          this.spawnParticles(nx, ny, 14, {
+            color: '#34d399',
+            speedMin: 45,
+            speedMax: 155,
+            angleMin: 0,
+            angleMax: Math.PI * 2,
+            size: 3.0,
+            life: 0.34,
+            gravity: 60,
+            glow: true,
+          });
+        }
+      } else if ((fb.standTimer ?? 0) > 0) {
+        fb.standTimer = Math.max(0, (fb.standTimer ?? 0) - dt * 0.55);
+      }
+    }
+  }
+
+  private activateBloomBridge(bb: BloomBridgeDef) {
+    const firstActivation = !bb.active;
+    bb.active = true;
+    bb.timer = bb.duration;
+    if (firstActivation) {
+      sound.playSwitchActivate();
+      this.addFloatingText(bb.triggerX, bb.triggerY - 16, 'BLOOM BRIDGE!', '#34d399');
+    }
+    this.spawnParticles(bb.triggerX, bb.triggerY, 12, {
+      color: '#6ee7b7',
+      speedMin: 45,
+      speedMax: 145,
+      angleMin: 0,
+      angleMax: Math.PI * 2,
+      size: 2.8,
+      life: 0.32,
+      gravity: 40,
+      glow: true,
+    });
+  }
+
+  private updateBloomBridges(dt: number) {
+    const p = this.player;
+    const pcx = p.x + p.w * 0.5;
+    const pcy = p.y + p.h * 0.5;
+    for (const bb of this.level.bloomBridges) {
+      if (bb.active) {
+        bb.timer -= dt;
+        if (bb.timer <= 0) {
+          bb.active = false;
+          bb.timer = 0;
+        }
+      } else if (Math.hypot(pcx - bb.triggerX, pcy - bb.triggerY) < 28) {
+        this.activateBloomBridge(bb);
+      }
+    }
+  }
+
+  private warpThroughMirror(mirror: MagicMirrorDef) {
+    if (mirror.cooldown > 0) return;
+    const target = this.level.mirrors.find((m) => m.id === mirror.targetMirrorId);
+    if (!target) return;
+
+    mirror.cooldown = 0.7;
+    target.cooldown = 0.7;
+
+    this.spawnParticles(this.player.x + this.player.w * 0.5, this.player.y + this.player.h * 0.5, 16, {
+      color: mirror.color,
+      speedMin: 50,
+      speedMax: 190,
+      angleMin: 0,
+      angleMax: Math.PI * 2,
+      size: 3.4,
+      life: 0.35,
+      gravity: 0,
+      glow: true,
+    });
+
+    this.player.x = target.x + (target.w - this.player.w) * 0.5;
+    this.player.y = target.y + target.h - this.player.h;
+    this.player.vx = this.player.facing * Math.max(120, Math.abs(this.player.vx));
+    this.player.vy = -140;
+    this.player.airJumpsLeft = 1;
+    this.player.invulnTimer = Math.max(this.player.invulnTimer, 0.45);
+    this.hitstopTimer = 0.04;
+    this.addShake(3.5, 0.14);
+    sound.playWarp();
+    this.addFloatingText(this.player.x + 12, this.player.y - 10, 'MIRROR WARP', mirror.color);
+
     // Snap scarf nodes so scarf doesn't stretch across the entire map!
     for (let i = 0; i < this.player.scarfNodes.length; i++) {
       this.player.scarfNodes[i].x = this.player.x + 12 - i * 4;
@@ -2425,6 +2749,7 @@ export class GameEngine {
       if (plat.oneWay) continue;
       if (plat.switchGroup && !this.isSwitchGroupActive(plat.switchGroup)) continue;
       if (plat.style === 'vanish_holo' && plat.vanishState === 'gone') continue;
+      if (plat.style === 'ember_vanish' && plat.vanishState === 'gone') continue;
       if (plat.style === 'crumble_ice' && plat.crumbleState === 'gone') continue;
       if (plat.style === 'freeze_water' && plat.waterState === 'liquid') continue;
       solids.push(plat);
@@ -2559,22 +2884,24 @@ export class GameEngine {
     for (const plat of this.level.platforms) {
       if (plat.switchGroup && !this.isSwitchGroupActive(plat.switchGroup)) continue;
       if (plat.style === 'vanish_holo' && plat.vanishState === 'gone') continue;
+      if (plat.style === 'ember_vanish' && plat.vanishState === 'gone') continue;
       if (plat.style === 'crumble_ice' && plat.crumbleState === 'gone') continue;
       if (plat.style === 'freeze_water' && plat.waterState === 'liquid') continue;
       checkPlatform(plat.x, plat.y, plat.w, plat.h, Boolean(plat.oneWay), undefined, () => {
         if (plat.style === 'ice_floor' || (plat.style === 'freeze_water' && plat.waterState === 'ice')) {
           p.standingIce = true;
         }
-        if (plat.bouncy || plat.style === 'emerald_bounce') {
+        if (plat.bouncy || plat.style === 'emerald_bounce' || plat.style === 'scarlet_bounce') {
+          const isScarlet = plat.style === 'scarlet_bounce';
           this.endSlideIfClear();
-          p.vy = p.jumpHeld ? (-705) : (-625);
+          p.vy = p.jumpHeld ? (isScarlet ? -740 : -705) : (isScarlet ? -660 : -625);
           p.onGround = false;
           p.airJumpsLeft = 1;
           p.scaleX = 0.78;
           p.scaleY = 1.28;
           sound.playJump(true);
           this.spawnParticles(p.x + p.w * 0.5, plat.y, 14, {
-            color: '#34d399',
+            color: isScarlet ? '#fb7185' : '#34d399',
             speedMin: 45,
             speedMax: 185,
             angleMin: -Math.PI,
@@ -2584,11 +2911,11 @@ export class GameEngine {
             gravity: 160,
             glow: true,
           });
-        } else if (plat.style === 'sap_stream' || plat.style === 'brass_conveyor') {
+        } else if (plat.style === 'sap_stream' || plat.style === 'brass_conveyor' || plat.style === 'magma_belt') {
           p.standingStreamVx = plat.streamVx ?? 0;
-        } else if (plat.style === 'vanish_holo' && plat.vanishState === 'solid') {
+        } else if ((plat.style === 'vanish_holo' || plat.style === 'ember_vanish') && plat.vanishState === 'solid') {
           plat.vanishState = 'warning';
-          plat.vanishTimer = 0.88;
+          plat.vanishTimer = plat.style === 'ember_vanish' ? 0.72 : 0.88;
         } else if (plat.style === 'crumble_ice' && plat.crumbleState !== 'cracking') {
           plat.crumbleState = 'cracking';
           plat.crumbleTimer = 0.50;
@@ -2706,6 +3033,7 @@ export class GameEngine {
     for (const plat of this.level.platforms) {
       if (plat.switchGroup && !this.isSwitchGroupActive(plat.switchGroup)) continue;
       if (plat.style === 'vanish_holo' && plat.vanishState === 'gone') continue;
+      if (plat.style === 'ember_vanish' && plat.vanishState === 'gone') continue;
       if (plat.style === 'crumble_ice' && plat.crumbleState === 'gone') continue;
       if (plat.style === 'freeze_water' && plat.waterState === 'liquid') continue;
       if (!this.level.verticalClimb && !this.level.verticalDescent && plat.y < 140) continue;
@@ -3143,7 +3471,415 @@ export class GameEngine {
       }
     }
 
- can shoot down homing orbs!
+    // World 5 Magma Geyser Columns (5-2 / 5-FORT2 / 5-6)
+    for (const mg of this.level.magmaGeysers ?? []) {
+      const cyc = mg.cyclePeriod || 3.4;
+      const t = (((this.worldTime + mg.phase) % cyc) + cyc) % cyc;
+      const erupting = t >= cyc - mg.activeDuration;
+      const warning = !erupting && t >= cyc - mg.activeDuration - 0.55;
+      if (warning && Math.abs(mg.x - pcx) < 620 && Math.random() < 0.35) {
+        this.spawnParticles(mg.x + Math.random() * mg.w, mg.y - 4, 1, {
+          color: '#fb923c',
+          speedMin: 30,
+          speedMax: 85,
+          angleMin: -Math.PI * 0.75,
+          angleMax: -Math.PI * 0.25,
+          size: 2.5,
+          life: 0.24,
+          gravity: 120,
+          glow: true,
+        });
+      }
+      if (erupting) {
+        if (Math.abs(mg.x - pcx) < 620 && Math.random() < 0.4) {
+          this.spawnParticles(mg.x + Math.random() * mg.w, mg.y - Math.random() * mg.maxHeight, 1, {
+            color: '#f97316',
+            speedMin: 40,
+            speedMax: 120,
+            angleMin: -Math.PI,
+            angleMax: 0,
+            size: 2.8,
+            life: 0.22,
+            gravity: 60,
+            glow: true,
+          });
+        }
+        if (
+          p.invulnTimer <= 0 &&
+          this.rectsOverlap(p.x + 2, p.y + 2, p.w - 4, p.h - 2, mg.x + 2, mg.y - mg.maxHeight, mg.w - 4, mg.maxHeight)
+        ) {
+          this.damagePlayer(false, Math.sign(pcx - (mg.x + mg.w * 0.5)) || -p.facing, DAMAGE_TABLE.magma_geyser);
+        }
+      }
+    }
+
+    // World 5 Crimson Pendulum Halberds (5-FORT1 / 5-5 / 5-8)
+    for (const pb of this.level.pendulumBlades ?? []) {
+      if (Math.abs(pb.cx - pcx) > 440) continue;
+      const ang = Math.sin(this.worldTime * pb.speed + pb.phase) * pb.maxAngle;
+      const bx = pb.cx + Math.sin(ang) * pb.length;
+      const by = pb.cy + Math.cos(ang) * pb.length;
+      if (p.invulnTimer <= 0 && Math.hypot(pcx - bx, pcy - by) < 28) {
+        this.damagePlayer(false, Math.sign(pcx - bx) || -p.facing, DAMAGE_TABLE.pendulum_blade);
+      }
+    }
+
+    // World 5 Danmaku Geometric Bullet Emitters (5-3 / 5-6 / 5-7 / 5-FORT3 / 5-BOSS)
+    for (const de of this.level.danmakuEmitters ?? []) {
+      if (outsideArena(de.x, 12)) continue;
+      if (Math.abs(de.x - pcx) > 640 || Math.abs(de.y - pcy) > 420) continue;
+      de.timer = (de.timer ?? 0) - dt;
+      if ((de.timer ?? 0) <= 0) {
+        de.timer = de.interval || 1.45;
+        de.stepCount = (de.stepCount ?? 0) + 1;
+        const speed = de.speed || 205;
+        if (de.pattern === 'ring') {
+          const cnt = de.count || 8;
+          const phaseOffset = (de.stepCount % 2) * (Math.PI / cnt);
+          for (let k = 0; k < cnt; k++) {
+            const ang = phaseOffset + (k * Math.PI * 2) / cnt;
+            this.projectiles.push({
+              x: de.x,
+              y: de.y,
+              vx: Math.cos(ang) * speed,
+              vy: Math.sin(ang) * speed,
+              r: 5.5,
+              life: 2.7,
+              fromEnemy: true,
+              damage: DAMAGE_TABLE.danmaku_emitter_orb,
+              color: k % 2 === 0 ? '#f43f5e' : '#fb923c',
+              trail: [],
+            });
+          }
+        } else if (de.pattern === 'spiral') {
+          const arms = de.count || 4;
+          const baseAng = de.stepCount * 0.48;
+          for (let k = 0; k < arms; k++) {
+            const ang = baseAng + (k * Math.PI * 2) / arms;
+            this.projectiles.push({
+              x: de.x,
+              y: de.y,
+              vx: Math.cos(ang) * speed,
+              vy: Math.sin(ang) * speed,
+              r: 5.2,
+              life: 2.8,
+              fromEnemy: true,
+              damage: DAMAGE_TABLE.danmaku_emitter_orb,
+              color: '#fb7185',
+              trail: [],
+            });
+          }
+        } else if (de.pattern === 'rose') {
+          const petals = de.count || 10;
+          const baseAng = de.stepCount * 0.35;
+          for (let k = 0; k < petals; k++) {
+            const ang = baseAng + (k * Math.PI * 2) / petals;
+            const modSpd = speed * (0.78 + 0.36 * Math.abs(Math.sin(ang * 2.5)));
+            this.projectiles.push({
+              x: de.x,
+              y: de.y,
+              vx: Math.cos(ang) * modSpd,
+              vy: Math.sin(ang) * modSpd,
+              r: 5.4,
+              life: 2.9,
+              fromEnemy: true,
+              damage: DAMAGE_TABLE.danmaku_emitter_orb,
+              color: k % 2 === 0 ? '#f43f5e' : '#fde047',
+              trail: [],
+            });
+          }
+        } else {
+          // 'fan' aimed at player
+          const aim = Math.atan2(pcy - de.y, pcx - de.x);
+          const cnt = de.count || 5;
+          const half = ((cnt - 1) * 0.22) * 0.5;
+          for (let k = 0; k < cnt; k++) {
+            const ang = aim - half + k * 0.22;
+            this.projectiles.push({
+              x: de.x,
+              y: de.y,
+              vx: Math.cos(ang) * speed,
+              vy: Math.sin(ang) * speed,
+              r: 5.5,
+              life: 2.4,
+              fromEnemy: true,
+              damage: DAMAGE_TABLE.danmaku_emitter_orb,
+              color: '#fb7185',
+              trail: [],
+            });
+          }
+        }
+      }
+    }
+  }
+
+  private getSporeJetRect(sj: SporeJetDef): { x: number; y: number; w: number; h: number } {
+    const beamThick = 24;
+    if (sj.dir === 'up') return { x: sj.x - beamThick * 0.5, y: sj.y - sj.range, w: beamThick, h: sj.range };
+    if (sj.dir === 'down') return { x: sj.x - beamThick * 0.5, y: sj.y, w: beamThick, h: sj.range };
+    if (sj.dir === 'left') return { x: sj.x - sj.range, y: sj.y - beamThick * 0.5, w: sj.range, h: beamThick };
+    return { x: sj.x, y: sj.y - beamThick * 0.5, w: sj.range, h: beamThick };
+  }
+
+  private distToSegment(px: number, py: number, x1: number, y1: number, x2: number, y2: number): number {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const lenSq = dx * dx + dy * dy || 1;
+    const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lenSq));
+    return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+  }
+
+  private updateCannons(dt: number) {
+    const activeBoss = this.level.boss;
+    const bossLocked = Boolean(activeBoss && activeBoss.active && !activeBoss.defeated);
+    for (const can of this.level.cannons) {
+      if (bossLocked && activeBoss && (can.x < activeBoss.arenaMinX - 12 || can.x > activeBoss.arenaMaxX + 12)) {
+        continue;
+      }
+      if (Math.abs(can.x - this.player.x) > 760) continue;
+      can.timer -= dt;
+      if (can.timer <= 0) {
+        can.timer = can.interval;
+        const speed = 285;
+        this.projectiles.push({
+          x: can.x + can.dir * 20,
+          y: can.y + 8,
+          vx: can.dir * Math.cos(can.angle) * speed,
+          vy: Math.sin(can.angle) * speed,
+          r: 8,
+          life: 2.5,
+          fromEnemy: true,
+          damage: DAMAGE_TABLE.airship_cannon,
+          color: '#fb7185',
+          trail: [],
+        });
+        this.spawnParticles(can.x + can.dir * 20, can.y + 8, 6, {
+          color: '#f59e0b',
+          speedMin: 40,
+          speedMax: 120,
+          angleMin: 0,
+          angleMax: Math.PI * 2,
+          size: 3,
+          life: 0.22,
+          gravity: 0,
+          glow: true,
+        });
+      }
+    }
+  }
+
+  private updateScarf(dt: number) {
+    const p = this.player;
+    const anchorX = p.x + p.w * 0.5 - p.facing * 4;
+    const anchorY = p.y + (p.sliding ? 8 : 15);
+    if (p.scarfNodes.length === 0) return;
+
+    p.scarfNodes[0].x = anchorX;
+    p.scarfNodes[0].y = anchorY;
+
+    const segLen = 6.2;
+    const windX = -p.facing * 45 - p.vx * 0.22 - (this.level.autoScrollSpeed ?? 0) * 0.45;
+    const flutter = Math.sin(this.worldTime * 11) * 18;
+
+    for (let i = 1; i < p.scarfNodes.length; i++) {
+      const prev = p.scarfNodes[i - 1];
+      const curr = p.scarfNodes[i];
+
+      curr.x += windX * 0.55 * dt;
+      curr.y += (55 + flutter * (i * 0.25)) * dt;
+
+      const dx = curr.x - prev.x;
+      const dy = curr.y - prev.y;
+      const dist = Math.hypot(dx, dy) || 0.001;
+      if (dist > segLen) {
+        curr.x = prev.x + (dx / dist) * segLen;
+        curr.y = prev.y + (dy / dist) * segLen;
+      }
+    }
+  }
+
+  private updateProjectiles(playerDt: number, enemyDt: number) {
+    const p = this.player;
+    const pcx = p.x + p.w * 0.5;
+    const pcy = p.y + p.h * 0.5;
+
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      const b = this.projectiles[i];
+      if (!b || b.life <= 0) {
+        this.projectiles.splice(i, 1);
+        continue;
+      }
+      const stepDt = b.fromEnemy ? enemyDt : playerDt;
+
+      b.trail.push({ x: b.x, y: b.y });
+      if (b.trail.length > 7) b.trail.shift();
+
+      if (b.pauseTimer !== undefined && b.pauseTimer > 0) {
+        b.pauseTimer -= stepDt;
+        b.life -= stepDt * 0.35;
+        if (b.pauseTimer <= 0) {
+          b.pauseTimer = undefined;
+          if (b.pauseTargetX !== undefined && b.pauseTargetY !== undefined) {
+            const ang = Math.atan2(b.pauseTargetY - b.y, b.pauseTargetX - b.x);
+            const spd = b.pauseSpeed ?? 295;
+            b.vx = Math.cos(ang) * spd;
+            b.vy = Math.sin(ang) * spd;
+          }
+        }
+      } else {
+        if (b.homing && b.fromEnemy) {
+          const dx = pcx - b.x;
+          const dy = pcy - b.y;
+          const targetAng = Math.atan2(dy, dx);
+          const curAng = Math.atan2(b.vy, b.vx);
+          let diff = targetAng - curAng;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          const spd = Math.hypot(b.vx, b.vy) || 180;
+          const nextAng = curAng + Math.max(-2.2 * stepDt, Math.min(2.2 * stepDt, diff));
+          b.vx = Math.cos(nextAng) * spd;
+          b.vy = Math.sin(nextAng) * spd;
+        }
+
+        if (b.boomerang) {
+          b.boomerang.elapsed += stepDt;
+          if (!b.boomerang.turned && b.boomerang.elapsed >= 0.56) {
+            b.boomerang.turned = true;
+            const dx = b.boomerang.originX - b.x;
+            const dy = b.boomerang.originY - b.y;
+            const ang = Math.atan2(dy, dx);
+            b.vx = Math.cos(ang) * b.boomerang.speed;
+            b.vy = Math.sin(ang) * b.boomerang.speed;
+          }
+        }
+
+        if (b.gravity) {
+          b.vy += b.gravity * stepDt;
+        }
+
+        b.x += b.vx * stepDt;
+        b.y += b.vy * stepDt;
+
+        if (b.waveAmp && b.waveFreq) {
+          b.waveAge = (b.waveAge ?? 0) + stepDt;
+          const spd = Math.hypot(b.vx, b.vy) || 1;
+          const nx = -b.vy / spd;
+          const ny = b.vx / spd;
+          const waveDelta = Math.cos(b.waveAge * b.waveFreq) * b.waveAmp * stepDt;
+          b.x += nx * waveDelta;
+          b.y += ny * waveDelta;
+        }
+
+        b.life -= stepDt;
+      }
+
+      // World 3/4 mid-air shard or lotus-petal split
+      if (b.splitTimer !== undefined) {
+        b.splitTimer -= stepDt;
+        if (b.splitTimer <= 0) {
+          b.splitTimer = undefined;
+          const baseAng = Math.atan2(b.vy, b.vx);
+          const offsets = b.splitCount === 4 ? [-1.05, -0.35, 0.35, 1.05] : [-0.4, 0, 0.4];
+          const col = b.splitColor ?? (b.chillDuration ? '#bae6fd' : '#6ee7b7');
+          for (const off of offsets) {
+            this.projectiles.push({
+              x: b.x,
+              y: b.y,
+              vx: Math.cos(baseAng + off) * 205,
+              vy: Math.sin(baseAng + off) * 205,
+              r: 5,
+              life: 1.65,
+              fromEnemy: true,
+              damage: b.splitDmg ?? DAMAGE_TABLE.frost_wraith_shard,
+              chillDuration: b.chillDuration,
+              color: col,
+              trail: [],
+            });
+          }
+          this.projectiles.splice(i, 1);
+          continue;
+        }
+      }
+
+      if (Math.random() < 0.45) {
+        this.spawnParticles(b.x, b.y, 1, {
+          color: b.color ?? (b.fromEnemy ? '#fb7185' : '#38f2ff'),
+          speedMin: 10,
+          speedMax: 40,
+          angleMin: 0,
+          angleMax: Math.PI * 2,
+          size: 2,
+          life: 0.16,
+          gravity: 0,
+          glow: true,
+        });
+      }
+
+      let hit = b.life <= 0;
+
+      if (b.fromEnemy) {
+        if (!hit && p.invulnTimer <= 0 && this.circleRectOverlap(b.x, b.y, b.r, p.x + 2, p.y + 2, p.w - 4, p.h - 2)) {
+          if (b.chillDuration) {
+            p.chillTimer = Math.max(p.chillTimer, b.chillDuration);
+          }
+          this.damagePlayer(false, Math.sign(b.vx) || -p.facing, b.damage ?? 20);
+          hit = true;
+        }
+        // Bouncing seeds & ricochet beams off solid platforms / arena bounds
+        if (!hit && ((b.bouncesLeft ?? 0) > 0 || (b.ricochetLeft ?? 0) > 0)) {
+          for (const plat of this.level.platforms) {
+            if (plat.switchGroup && !this.isSwitchGroupActive(plat.switchGroup)) continue;
+            if (plat.style === 'vanish_holo' && plat.vanishState === 'gone') continue;
+            if (plat.style === 'crumble_ice' && plat.crumbleState === 'gone') continue;
+            if (plat.style === 'freeze_water' && plat.waterState === 'liquid') continue;
+            if (!this.circleRectOverlap(b.x, b.y, b.r, plat.x, plat.y, plat.w, plat.h)) continue;
+            if ((b.bouncesLeft ?? 0) > 0 && b.vy > 0 && b.y <= plat.y + 18) {
+              b.y = plat.y - b.r;
+              b.vy = -Math.max(240, Math.abs(b.vy) * 0.78);
+              b.bouncesLeft! -= 1;
+              this.spawnParticles(b.x, b.y, 4, {
+                color: b.color ?? '#34d399',
+                speedMin: 30,
+                speedMax: 90,
+                angleMin: -Math.PI,
+                angleMax: 0,
+                size: 2,
+                life: 0.18,
+                gravity: 120,
+                glow: true,
+              });
+              break;
+            } else if ((b.ricochetLeft ?? 0) > 0 && !plat.oneWay) {
+              const overlapTop = b.y + b.r - plat.y;
+              const overlapBot = plat.y + plat.h - (b.y - b.r);
+              const overlapLeft = b.x + b.r - plat.x;
+              const overlapRight = plat.x + plat.w - (b.x - b.r);
+              const minVert = Math.min(overlapTop, overlapBot);
+              const minHorz = Math.min(overlapLeft, overlapRight);
+              if (minVert <= minHorz) {
+                b.vy = -b.vy;
+                b.y += overlapTop < overlapBot ? -overlapTop : overlapBot;
+              } else {
+                b.vx = -b.vx;
+                b.x += overlapLeft < overlapRight ? -overlapLeft : overlapRight;
+              }
+              b.ricochetLeft! -= 1;
+              this.spawnParticles(b.x, b.y, 5, {
+                color: b.color ?? '#6ee7b7',
+                speedMin: 40,
+                speedMax: 120,
+                angleMin: 0,
+                angleMax: Math.PI * 2,
+                size: 2.2,
+                life: 0.2,
+                gravity: 0,
+                glow: true,
+              });
+              break;
+            }
+          }
+        }
+        // Player can shoot down homing orbs!
         if (!hit && b.homing) {
           for (let j = this.projectiles.length - 1; j >= 0; j--) {
             if (i === j) continue;
@@ -3449,7 +4185,28 @@ export class GameEngine {
               break;
             }
 
-, Glacier Golem, Invuln enemies, or Aegis shield rotation
+            // World 5 Blood Mirror reflects frontal bolts as Twin 2-Way Crimson Fan Bolts!
+            if (en.kind === 'blood_mirror' && Math.sign(b.vx) !== en.facing) {
+              sound.playShieldClang();
+              for (const vyOff of [-95, 95]) {
+                this.projectiles.push({
+                  x: b.x,
+                  y: b.y,
+                  vx: -b.vx * 0.8,
+                  vy: vyOff,
+                  r: 6,
+                  life: 1.65,
+                  fromEnemy: true,
+                  damage: DAMAGE_TABLE.ruby_turret_shot,
+                  color: '#f43f5e',
+                  trail: [],
+                });
+              }
+              this.addFloatingText(en.x + en.w * 0.5, en.y - 8, 'BLOOD REFLECT!', '#fb7185');
+              break;
+            }
+
+            // Shield Trooper, Glacier Golem, Invuln enemies, or Aegis shield rotation
             const aegisBlocked =
               en.kind === 'aegis_drone' && Math.abs(Math.cos(this.worldTime * 3.8)) > 0.45;
             if (
@@ -3534,6 +4291,7 @@ export class GameEngine {
           if (plat.oneWay) continue;
           if (plat.switchGroup && !this.isSwitchGroupActive(plat.switchGroup)) continue;
           if (plat.style === 'vanish_holo' && plat.vanishState === 'gone') continue;
+          if (plat.style === 'ember_vanish' && plat.vanishState === 'gone') continue;
           if (plat.style === 'crumble_ice' && plat.crumbleState === 'gone') continue;
           if (plat.style === 'freeze_water' && plat.waterState === 'liquid') continue;
           if (this.circleRectOverlap(b.x, b.y, b.r, plat.x, plat.y, plat.w, plat.h)) {
@@ -5427,6 +6185,402 @@ export class GameEngine {
           }
           break;
         }
+        // ==================== WORLD 5 ENEMIES ====================
+        case 'crimson_lancer': {
+          const cx = en.x + en.w * 0.5;
+          const cy = en.y + en.h * 0.5;
+          const st = en.chargeState || 'patrol';
+          if (st === 'warn') {
+            en.chargeTimer = (en.chargeTimer ?? 0) - dt;
+            if ((en.chargeTimer ?? 0) <= 0) {
+              en.chargeState = 'charge';
+              en.chargeTimer = 0.52;
+              en.vx = en.facing * 355;
+            }
+          } else if (st === 'charge') {
+            en.x += en.vx * dt;
+            en.chargeTimer = (en.chargeTimer ?? 0) - dt;
+            if (en.x <= en.minX || en.x + en.w >= en.maxX || (en.chargeTimer ?? 0) <= 0) {
+              en.x = Math.max(en.minX, Math.min(en.maxX - en.w, en.x));
+              en.chargeState = 'recover';
+              en.chargeTimer = 0.55;
+              en.vx = en.facing * 68;
+            }
+          } else if (st === 'recover') {
+            en.chargeTimer = (en.chargeTimer ?? 0) - dt;
+            if ((en.chargeTimer ?? 0) <= 0) {
+              en.chargeState = 'patrol';
+            }
+          } else {
+            en.x += en.vx * dt;
+            if (en.x <= en.minX) en.vx = Math.abs(en.vx);
+            else if (en.x + en.w >= en.maxX) en.vx = -Math.abs(en.vx);
+            en.facing = en.vx >= 0 ? 1 : -1;
+            if (Math.abs(pcx - cx) < 235 && Math.abs(pcy - cy) < 62) {
+              en.facing = pcx >= cx ? 1 : -1;
+              en.chargeState = 'warn';
+              en.chargeTimer = 0.44;
+              sound.playWarn();
+            }
+          }
+          break;
+        }
+        case 'magma_imp': {
+          const cx = en.x + en.w * 0.5;
+          en.phase += dt * 2.5;
+          en.x += en.vx * dt;
+          if (en.x <= en.minX) en.vx = Math.abs(en.vx);
+          else if (en.x + en.w >= en.maxX) en.vx = -Math.abs(en.vx);
+          en.facing = en.vx >= 0 ? 1 : -1;
+          en.y = en.baseY + Math.sin(en.phase) * 20;
+          en.fireCooldown = (en.fireCooldown ?? 1.8) - dt;
+          if ((en.fireCooldown ?? 0) <= 0 && Math.abs(pcx - cx) < 390) {
+            en.fireCooldown = 1.85;
+            this.projectiles.push({
+              x: cx,
+              y: en.y + en.h,
+              vx: (pcx >= cx ? 1 : -1) * 145,
+              vy: -90,
+              r: 6,
+              life: 2.8,
+              fromEnemy: true,
+              gravity: 560,
+              bouncesLeft: 2,
+              damage: DAMAGE_TABLE.magma_imp_glob,
+              color: '#f97316',
+              trail: [],
+            });
+          }
+          break;
+        }
+        case 'ruby_turret': {
+          const cx = en.x + en.w * 0.5;
+          const cy = en.y + en.h * 0.5;
+          en.facing = pcx >= cx ? 1 : -1;
+          en.fireCooldown = (en.fireCooldown ?? 1.8) - dt;
+          if ((en.fireCooldown ?? 0) <= 0 && Math.abs(pcx - cx) < 520) {
+            en.fireCooldown = 1.75;
+            en.subTimer = (en.subTimer ?? 0) + 1;
+            const rotOff = ((en.subTimer ?? 0) % 2) * (Math.PI / 6);
+            for (let k = 0; k < 6; k++) {
+              const ang = rotOff + (k * Math.PI * 2) / 6;
+              this.projectiles.push({
+                x: cx,
+                y: cy,
+                vx: Math.cos(ang) * 205,
+                vy: Math.sin(ang) * 205,
+                r: 5.5,
+                life: 2.5,
+                fromEnemy: true,
+                damage: DAMAGE_TABLE.ruby_turret_shot,
+                color: '#f43f5e',
+                trail: [],
+              });
+            }
+          }
+          break;
+        }
+        case 'scarlet_reaper': {
+          const cx = en.x + en.w * 0.5;
+          const cy = en.y + en.h * 0.5;
+          en.x += en.vx * dt;
+          if (en.x <= en.minX) en.vx = Math.abs(en.vx);
+          else if (en.x + en.w >= en.maxX) en.vx = -Math.abs(en.vx);
+          en.facing = pcx >= cx ? 1 : -1;
+          en.fireCooldown = (en.fireCooldown ?? 1.9) - dt;
+          if ((en.fireCooldown ?? 0) <= 0 && Math.abs(pcx - cx) < 470 && Math.abs(pcy - cy) < 165) {
+            en.fireCooldown = 1.95;
+            for (const dirOff of [-1, 1]) {
+              this.projectiles.push({
+                x: cx + en.facing * 12,
+                y: cy - 4,
+                vx: en.facing * 225,
+                vy: 0,
+                r: 6,
+                life: 2.2,
+                fromEnemy: true,
+                waveAmp: 120 * dirOff,
+                waveFreq: 9,
+                waveAge: 0,
+                damage: DAMAGE_TABLE.scarlet_reaper_wave,
+                color: '#fb7185',
+                trail: [],
+              });
+            }
+          }
+          break;
+        }
+        case 'ember_bomber': {
+          const cx = en.x + en.w * 0.5;
+          en.phase += dt * 2.1;
+          en.x += en.vx * dt;
+          if (en.x <= en.minX) en.vx = Math.abs(en.vx);
+          else if (en.x + en.w >= en.maxX) en.vx = -Math.abs(en.vx);
+          en.facing = en.vx >= 0 ? 1 : -1;
+          en.y = en.baseY + Math.sin(en.phase) * 14;
+          en.fireCooldown = (en.fireCooldown ?? 2.0) - dt;
+          if ((en.fireCooldown ?? 0) <= 0 && Math.abs(pcx - cx) < 420) {
+            en.fireCooldown = 2.15;
+            this.projectiles.push({
+              x: cx,
+              y: en.y + en.h,
+              vx: en.facing * 75,
+              vy: 25,
+              r: 7,
+              life: 2.0,
+              fromEnemy: true,
+              gravity: 420,
+              splitTimer: 0.7,
+              splitCount: 4,
+              splitDmg: DAMAGE_TABLE.ember_bomber_blast,
+              splitColor: '#fb923c',
+              damage: DAMAGE_TABLE.ember_bomber_blast,
+              color: '#f97316',
+              trail: [],
+            });
+          }
+          break;
+        }
+        case 'blood_mirror': {
+          const cx = en.x + en.w * 0.5;
+          en.x += en.vx * dt;
+          if (en.x <= en.minX) en.vx = Math.abs(en.vx);
+          else if (en.x + en.w >= en.maxX) en.vx = -Math.abs(en.vx);
+          en.facing = pcx >= cx ? 1 : -1;
+          break;
+        }
+        case 'inferno_wyvern': {
+          const cx = en.x + en.w * 0.5;
+          en.phase += dt * 2.9;
+          en.x += en.vx * dt;
+          if (en.x <= en.minX) en.vx = Math.abs(en.vx);
+          else if (en.x + en.w >= en.maxX) en.vx = -Math.abs(en.vx);
+          en.facing = en.vx >= 0 ? 1 : -1;
+          en.y = en.baseY + Math.sin(en.phase) * 44;
+          en.fireCooldown = (en.fireCooldown ?? 1.8) - dt;
+          if ((en.fireCooldown ?? 0) <= 0 && Math.abs(pcx - cx) < 480) {
+            en.fireCooldown = 1.9;
+            for (const angOff of [-0.32, 0, 0.32]) {
+              const ang = Math.PI * 0.5 + angOff;
+              this.projectiles.push({
+                x: cx,
+                y: en.y + en.h,
+                vx: Math.cos(ang) * 230,
+                vy: Math.sin(ang) * 230,
+                r: 5.5,
+                life: 2.1,
+                fromEnemy: true,
+                damage: DAMAGE_TABLE.inferno_wyvern_feather,
+                color: '#fb923c',
+                trail: [],
+              });
+            }
+          }
+          break;
+        }
+        case 'valkyrie_bit': {
+          const cx = en.x + en.w * 0.5;
+          const cy = en.y + en.h * 0.5;
+          en.phase += dt * 3.1;
+          en.x += en.vx * dt;
+          if (en.x <= en.minX) en.vx = Math.abs(en.vx);
+          else if (en.x + en.w >= en.maxX) en.vx = -Math.abs(en.vx);
+          en.facing = pcx >= cx ? 1 : -1;
+          en.y = en.baseY + Math.sin(en.phase) * 18;
+          en.fireCooldown = (en.fireCooldown ?? 1.65) - dt;
+          if ((en.fireCooldown ?? 0) <= 0 && Math.abs(pcx - cx) < 540) {
+            en.fireCooldown = 1.7;
+            en.subTimer = (en.subTimer ?? 0) + 1;
+            if ((en.subTimer ?? 0) % 2 === 0) {
+              // 8-way geometric crimson ring
+              for (let k = 0; k < 8; k++) {
+                const ang = (k * Math.PI * 2) / 8 + ((en.subTimer ?? 0) * 0.2);
+                this.projectiles.push({
+                  x: cx,
+                  y: cy,
+                  vx: Math.cos(ang) * 210,
+                  vy: Math.sin(ang) * 210,
+                  r: 5.2,
+                  life: 2.6,
+                  fromEnemy: true,
+                  damage: DAMAGE_TABLE.valkyrie_bit_danmaku,
+                  color: k % 2 === 0 ? '#f43f5e' : '#fde047',
+                  trail: [],
+                });
+              }
+            } else {
+              // 5-way aimed scarlet danmaku fan
+              const aim = Math.atan2(pcy - cy, pcx - cx);
+              for (const off of [-0.36, -0.18, 0, 0.18, 0.36]) {
+                this.projectiles.push({
+                  x: cx,
+                  y: cy,
+                  vx: Math.cos(aim + off) * 235,
+                  vy: Math.sin(aim + off) * 235,
+                  r: 5.2,
+                  life: 2.3,
+                  fromEnemy: true,
+                  damage: DAMAGE_TABLE.valkyrie_bit_danmaku,
+                  color: '#fb7185',
+                  trail: [],
+                });
+              }
+            }
+          }
+          break;
+        }
+      }
+
+      // Player collision with enemy
+      if (
+        en.alive &&
+        this.rectsOverlap(p.x + 2, p.y + 2, p.w - 4, p.h - 2, en.x + 2, en.y + 2, en.w - 4, en.h - 4)
+      ) {
+        const playerBottom = p.y + p.h;
+        const prevBottom = playerBottom - Math.max(0, p.vy) * dt;
+        const stompThreshold = en.y + en.h * 0.62;
+
+        // Safe Gold Boost Pad mode on shot mirror_gear!
+        if (en.kind === 'mirror_gear' && en.chargeState === 'warn') {
+          if (p.vy >= 0 && prevBottom <= stompThreshold + 16) {
+            p.y = Math.min(p.y, en.y - p.h - 2);
+            p.vy = -515;
+            p.airJumpsLeft = 1;
+            p.scaleX = 0.8;
+            p.scaleY = 1.25;
+            this.stompGraceTimer = 0.28;
+            sound.playJump(true);
+            this.addFloatingText(en.x + en.w * 0.5, en.y - 10, 'BOOST!', '#fde047');
+          }
+          continue;
+        }
+
+        // 1) Stomp from above (separate cleanly & grant short contact-grace so player never self-damages on bounce!)
+        if (
+          en.kind !== 'chrono_pendulum' &&
+          !(en.kind === 'spark_jelly' && en.invulnMode) &&
+          p.vy >= 0 &&
+          prevBottom <= stompThreshold + 16
+        ) {
+          p.y = Math.min(p.y, en.y - p.h - 2);
+          p.vy = p.jumpHeld ? STOMP_BOUNCE_HIGH : STOMP_BOUNCE_LOW;
+          p.airJumpsLeft = 1;
+          p.scaleX = 1.24;
+          p.scaleY = 0.78;
+          this.stompGraceTimer = 0.28;
+          if (en.kind === 'spring_bumper') {
+            p.vy = -565;
+            en.subTimer = 0.28;
+            this.damageEnemy(en, 1, 'stomp');
+            this.addFloatingText(en.x + en.w * 0.5, en.y - 12, 'SPRING!', '#34d399');
+          } else if (en.kind === 'saw_wheel') {
+            sound.playShieldClang();
+            this.addFloatingText(en.x + en.w * 0.5, en.y - 8, 'BOUNCE', '#fbbf24');
+          } else if (en.kind === 'bomb_walker') {
+            this.primeBombWalker(en);
+            sound.playStomp();
+          } else {
+            this.damageEnemy(en, 2, 'stomp');
+          }
+          continue;
+        }
+
+        // 2) High-speed Sliding bowls through light ground enemies!
+        if (
+          p.sliding &&
+          Math.abs(p.vx) > 250 &&
+          ['patrol_drone', 'hopping_bot', 'slime_glitch', 'skate_courier', 'cryo_slime', 'holo_decoy', 'mana_leech', 'bio_spore', 'ice_skater'].includes(en.kind)
+        ) {
+          this.damageEnemy(en, 2, 'slide');
+          continue;
+        }
+
+        // 3) Otherwise hurt player with 1-increment enemy-specific damage
+        if (p.invulnTimer <= 0 && this.stompGraceTimer <= 0 && !en.primed) {
+          let contactDmg: number = DAMAGE_TABLE.patrol_drone;
+          switch (en.kind) {
+            case 'patrol_drone': contactDmg = DAMAGE_TABLE.patrol_drone; break;
+            case 'slime_glitch': contactDmg = en.isMini ? DAMAGE_TABLE.mini_slime : DAMAGE_TABLE.slime_glitch; break;
+            case 'hopping_bot': contactDmg = DAMAGE_TABLE.hopping_bot; break;
+            case 'sniper_turret': contactDmg = DAMAGE_TABLE.sniper_turret_contact; break;
+            case 'arcane_caster': contactDmg = DAMAGE_TABLE.arcane_caster_contact; break;
+            case 'ghost_wisp': contactDmg = DAMAGE_TABLE.ghost_wisp; break;
+            case 'shield_trooper': contactDmg = DAMAGE_TABLE.shield_trooper; break;
+            case 'bulldozer_mech':
+              contactDmg = en.chargeState === 'charge' ? DAMAGE_TABLE.bulldozer_charge : DAMAGE_TABLE.bulldozer_patrol;
+              break;
+            case 'bomb_walker': contactDmg = DAMAGE_TABLE.bomb_walker_contact; break;
+            case 'neon_bat': contactDmg = DAMAGE_TABLE.neon_bat; break;
+            case 'skate_courier': contactDmg = DAMAGE_TABLE.skate_courier; break;
+            case 'riot_baton': contactDmg = DAMAGE_TABLE.riot_baton; break;
+            case 'volt_jelly': contactDmg = DAMAGE_TABLE.volt_jelly; break;
+            case 'rail_spider': contactDmg = DAMAGE_TABLE.rail_spider; break;
+            case 'magnet_orb': contactDmg = DAMAGE_TABLE.magnet_orb; break;
+            case 'prism_reflector': contactDmg = DAMAGE_TABLE.prism_reflector_contact; break;
+            case 'mortar_crab': contactDmg = DAMAGE_TABLE.mortar_crab_contact; break;
+            case 'stealth_ninja': contactDmg = DAMAGE_TABLE.stealth_ninja_contact; break;
+            case 'saw_wheel': contactDmg = DAMAGE_TABLE.saw_wheel; break;
+            case 'holo_decoy': contactDmg = DAMAGE_TABLE.holo_decoy; break;
+            case 'cryo_slime': contactDmg = DAMAGE_TABLE.cryo_slime; break;
+            case 'arc_pylon': contactDmg = DAMAGE_TABLE.arc_pylon_contact; break;
+            case 'grimoire_mimic': contactDmg = DAMAGE_TABLE.grimoire_mimic; break;
+            case 'rune_sentinel': contactDmg = DAMAGE_TABLE.rune_sentinel_contact; break;
+            case 'mirror_wraith': contactDmg = DAMAGE_TABLE.mirror_wraith; break;
+            case 'chrono_pendulum': contactDmg = DAMAGE_TABLE.chrono_pendulum; break;
+            case 'gravity_imp': contactDmg = DAMAGE_TABLE.gravity_imp_contact; break;
+            case 'ink_specter': contactDmg = DAMAGE_TABLE.ink_specter_contact; break;
+            case 'star_weaver': contactDmg = DAMAGE_TABLE.star_weaver_contact; break;
+            case 'golem_knight': contactDmg = DAMAGE_TABLE.golem_knight; break;
+            case 'mana_leech': contactDmg = DAMAGE_TABLE.mana_leech; break;
+            case 'sigil_bomber': contactDmg = DAMAGE_TABLE.sigil_bomber_contact; break;
+            case 'void_eye': contactDmg = DAMAGE_TABLE.void_eye_contact; break;
+            case 'flame_thruster': contactDmg = DAMAGE_TABLE.flame_thruster; break;
+            case 'jet_trooper': contactDmg = DAMAGE_TABLE.jet_trooper_contact; break;
+            case 'railgun_mech': contactDmg = DAMAGE_TABLE.railgun_mech_contact; break;
+            case 'aegis_drone': contactDmg = DAMAGE_TABLE.aegis_drone; break;
+            case 'cluster_mine': contactDmg = DAMAGE_TABLE.cluster_mine_contact; break;
+            case 'vortex_fan': contactDmg = DAMAGE_TABLE.vortex_fan; break;
+            case 'plasma_hound': contactDmg = DAMAGE_TABLE.plasma_hound; break;
+            case 'drill_mole': contactDmg = DAMAGE_TABLE.drill_mole; break;
+            case 'tesla_walker': contactDmg = DAMAGE_TABLE.tesla_walker_contact; break;
+            case 'phantom_knight': contactDmg = DAMAGE_TABLE.phantom_knight; break;
+            case 'bio_spore': contactDmg = DAMAGE_TABLE.bio_spore_contact; break;
+            case 'omega_drone': contactDmg = DAMAGE_TABLE.omega_drone_contact; break;
+            case 'gear_roller': contactDmg = DAMAGE_TABLE.gear_roller; break;
+            case 'spark_jelly':
+              contactDmg = en.invulnMode ? DAMAGE_TABLE.spark_jelly_barrier : DAMAGE_TABLE.spark_jelly;
+              break;
+            case 'laser_drone': contactDmg = DAMAGE_TABLE.laser_drone_contact; break;
+            case 'thunder_imp': contactDmg = DAMAGE_TABLE.thunder_imp_contact; break;
+            case 'spring_bumper': contactDmg = DAMAGE_TABLE.spring_bumper; break;
+            case 'magnet_crane': contactDmg = DAMAGE_TABLE.magnet_crane; break;
+            case 'mirror_gear': contactDmg = DAMAGE_TABLE.mirror_gear; break;
+            case 'tether_spark': contactDmg = DAMAGE_TABLE.tether_spark_contact; break;
+            case 'gravity_flipper': contactDmg = DAMAGE_TABLE.gravity_flipper; break;
+            case 'dash_rammer': contactDmg = DAMAGE_TABLE.dash_rammer; break;
+            case 'thorn_weaver': contactDmg = DAMAGE_TABLE.thorn_weaver_contact; break;
+            case 'emerald_mantis': contactDmg = DAMAGE_TABLE.emerald_mantis_contact; break;
+            case 'prism_spore': contactDmg = DAMAGE_TABLE.prism_spore_contact; break;
+            case 'chrono_vine': contactDmg = DAMAGE_TABLE.chrono_vine_contact; break;
+            case 'bio_hydra': contactDmg = DAMAGE_TABLE.bio_hydra_contact; break;
+            case 'jade_sniper': contactDmg = DAMAGE_TABLE.jade_sniper_contact; break;
+            case 'frost_wraith': contactDmg = DAMAGE_TABLE.frost_wraith_contact; break;
+            case 'icicle_bat': contactDmg = DAMAGE_TABLE.icicle_bat_contact; break;
+            case 'glacier_golem': contactDmg = DAMAGE_TABLE.glacier_golem_contact; break;
+            case 'cryo_turret': contactDmg = DAMAGE_TABLE.cryo_turret_contact; break;
+            case 'blizzard_fairy': contactDmg = DAMAGE_TABLE.blizzard_fairy_contact; break;
+            case 'ice_skater': contactDmg = DAMAGE_TABLE.ice_skater; break;
+            case 'mirror_frost': contactDmg = DAMAGE_TABLE.mirror_frost; break;
+            case 'permafrost_wyrm': contactDmg = DAMAGE_TABLE.permafrost_wyrm_contact; break;
+            case 'crimson_lancer': contactDmg = DAMAGE_TABLE.crimson_lancer_contact; break;
+            case 'magma_imp': contactDmg = DAMAGE_TABLE.magma_imp_contact; break;
+            case 'ruby_turret': contactDmg = DAMAGE_TABLE.ruby_turret_contact; break;
+            case 'scarlet_reaper': contactDmg = DAMAGE_TABLE.scarlet_reaper_contact; break;
+            case 'ember_bomber': contactDmg = DAMAGE_TABLE.ember_bomber_contact; break;
+            case 'blood_mirror': contactDmg = DAMAGE_TABLE.blood_mirror; break;
+            case 'inferno_wyvern': contactDmg = DAMAGE_TABLE.inferno_wyvern_contact; break;
+            case 'valkyrie_bit': contactDmg = DAMAGE_TABLE.valkyrie_bit_contact; break;
+          }
           const knockDir = Math.sign(pcx - (en.x + en.w * 0.5)) || -p.facing;
           this.damagePlayer(false, knockDir, contactDmg);
           if (en.kind === 'spring_bumper') {
@@ -7654,6 +8808,876 @@ export class GameEngine {
         boss.stateTimer = 1.3;
       }
       boss.x = Math.max(boss.arenaMinX + 20, Math.min(boss.arenaMaxX - boss.w - 20, boss.x));
+    } else if (boss.kind === 'scarlet_sentinel') {
+      // ==================== WORLD 5 ENCOUNTER GUARDIAN (3 VARIANTS) ====================
+      const cx = boss.x + boss.w * 0.5;
+      const cy = boss.y + boss.h * 0.5;
+      const variant = boss.variant ?? 1;
+      boss.facing = pcx >= cx ? 1 : -1;
+      boss.phase = boss.hp <= 5 ? 2 : 1;
+
+      if (boss.state === 'idle') {
+        boss.vx = 0;
+        boss.y = boss.floorY - boss.h;
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          const r = Math.random();
+          if (variant === 2 && r < 0.44) {
+            // Variant 2 (Magma Slag): Split ember arcs + 4-column Magma Geysers
+            boss.state = 'danmaku_fan';
+            boss.stateTimer = 0.85;
+            for (const spd of [165, 255]) {
+              this.projectiles.push({
+                x: cx + boss.facing * 16,
+                y: boss.y + 10,
+                vx: boss.facing * spd,
+                vy: -295,
+                r: 7.5,
+                life: 2.6,
+                fromEnemy: true,
+                gravity: 610,
+                splitTimer: 0.72,
+                splitCount: 4,
+                splitColor: '#fb923c',
+                splitDmg: DAMAGE_TABLE.scarlet_sentinel_wave,
+                damage: DAMAGE_TABLE.scarlet_sentinel_wave,
+                color: '#f97316',
+                trail: [],
+              });
+            }
+          } else if (variant === 3 && r < 0.48) {
+            // Variant 3 (Danmaku Bit): 10-way Rotating Crimson Rose Ring + Paused Lancet Pair
+            boss.state = 'danmaku_fan';
+            boss.stateTimer = 0.9;
+            const ringCnt = boss.phase === 2 ? 12 : 10;
+            for (let k = 0; k < ringCnt; k++) {
+              const ang = this.worldTime + (k * Math.PI * 2) / ringCnt;
+              this.projectiles.push({
+                x: cx,
+                y: cy - 8,
+                vx: Math.cos(ang) * 210,
+                vy: Math.sin(ang) * 210,
+                r: 5.5,
+                life: 2.5,
+                fromEnemy: true,
+                damage: DAMAGE_TABLE.ruby_turret_shot,
+                color: k % 2 === 0 ? '#f43f5e' : '#fde047',
+                trail: [],
+              });
+            }
+          } else if (r < 0.42) {
+            boss.state = 'danmaku_fan';
+            boss.stateTimer = 0.72;
+            const aim = Math.atan2(pcy - cy, pcx - cx);
+            const cnt = boss.phase === 2 ? 7 : 5;
+            const half = ((cnt - 1) * 0.16) * 0.5;
+            for (let k = 0; k < cnt; k++) {
+              const ang = aim - half + k * 0.16;
+              this.projectiles.push({
+                x: cx,
+                y: cy - 6,
+                vx: Math.cos(ang) * 265,
+                vy: Math.sin(ang) * 265,
+                r: 6,
+                life: 2.3,
+                fromEnemy: true,
+                damage: DAMAGE_TABLE.ruby_turret_shot,
+                color: '#f43f5e',
+                trail: [],
+              });
+            }
+          } else if (r < 0.74) {
+            boss.state = 'dash_warn';
+            boss.stateTimer = 0.45;
+            boss.comboLeft = variant === 3 ? 1 : 0;
+            boss.vx = boss.facing * 435;
+            sound.playWarn();
+          } else {
+            boss.state = 'leap';
+            boss.vy = -515;
+            boss.vx = boss.facing * 225;
+            boss.stateTimer = 1.8;
+          }
+        }
+      } else if (boss.state === 'danmaku_fan') {
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          boss.state = 'idle';
+          boss.stateTimer = 0.85;
+        }
+      } else if (boss.state === 'dash_warn') {
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          boss.state = 'dash';
+          boss.stateTimer = 3.5;
+          sound.playShieldClang();
+        }
+      } else if (boss.state === 'dash') {
+        boss.x += boss.vx * dt;
+        boss.stateTimer -= dt;
+        const hitLeft = boss.vx < 0 && boss.x <= boss.arenaMinX + 24;
+        const hitRight = boss.vx > 0 && boss.x + boss.w >= boss.arenaMaxX - 24;
+        if (hitLeft || hitRight || boss.stateTimer <= 0) {
+          if ((hitLeft || hitRight) && (boss.comboLeft ?? 0) > 0 && boss.stateTimer > 0) {
+            boss.comboLeft = (boss.comboLeft ?? 1) - 1;
+            boss.x = hitLeft ? boss.arenaMinX + 26 : boss.arenaMaxX - boss.w - 26;
+            boss.vx = -boss.vx;
+            boss.facing = boss.vx > 0 ? 1 : -1;
+            boss.stateTimer = 3.5;
+            sound.playShieldClang();
+          } else {
+            boss.x = Math.max(boss.arenaMinX + 24, Math.min(boss.arenaMaxX - boss.w - 24, boss.x));
+            boss.vx = 0;
+            boss.state = 'idle';
+            boss.stateTimer = 0.75;
+          }
+        }
+      } else if (boss.state === 'leap') {
+        boss.vy += 1260 * dt;
+        boss.x += boss.vx * dt;
+        boss.y += boss.vy * dt;
+        boss.x = Math.max(boss.arenaMinX + 24, Math.min(boss.arenaMaxX - boss.w - 24, boss.x));
+        if (boss.y >= boss.floorY - boss.h) {
+          boss.y = boss.floorY - boss.h;
+          boss.vy = 0;
+          boss.vx = 0;
+          this.addShake(5.0, 0.16);
+          sound.playExplosion();
+          for (const dir of [-1, 1]) {
+            this.projectiles.push({
+              x: cx + dir * 20,
+              y: boss.floorY - 12,
+              vx: dir * 270,
+              vy: 0,
+              r: 7,
+              life: 1.8,
+              fromEnemy: true,
+              shockwave: true,
+              damage: DAMAGE_TABLE.scarlet_sentinel_wave,
+              color: '#fb7185',
+              trail: [],
+            });
+          }
+          boss.state = 'idle';
+          boss.stateTimer = 0.85;
+        }
+      } else {
+        boss.state = 'idle';
+        boss.stateTimer = 0.8;
+      }
+    } else if (boss.kind === 'ruby_executor') {
+      // ==================== 5-FORT1 BOSS (RUBY EXECUTOR: Cross-Height Boomerang Halberds + Guillotine Dive Cleave + Trail Rush) ====================
+      const cx = boss.x + boss.w * 0.5;
+      const cy = boss.y + boss.h * 0.5;
+      boss.phase = boss.hp <= 7 ? 2 : 1;
+
+      if (boss.state === 'patrol' || boss.state === 'idle') {
+        boss.facing = pcx >= cx ? 1 : -1;
+        boss.x += boss.facing * (boss.phase === 2 ? 128 : 96) * dt;
+        boss.x = Math.max(boss.arenaMinX + 26, Math.min(boss.arenaMaxX - boss.w - 26, boss.x));
+        boss.y = boss.floorY - boss.h;
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          const r = Math.random();
+          if (r < 0.36) {
+            // Cross-height twin returning Boomerang Halberds (high + low staggered lanes)
+            boss.state = 'boomerang_cross';
+            boss.stateTimer = 0.88;
+            sound.playShieldClang();
+            this.addFloatingText(cx, boss.y - 16, 'TWIN HALBERD BOOMERANG!', '#fb7185');
+            for (const [hy, spd] of [
+              [boss.floorY - 78, 355],
+              [boss.floorY - 22, 295],
+            ]) {
+              this.projectiles.push({
+                x: cx + boss.facing * 20,
+                y: hy,
+                vx: boss.facing * spd,
+                vy: 0,
+                r: 9,
+                life: 2.55,
+                fromEnemy: true,
+                boomerang: { originX: cx, originY: hy, speed: spd, elapsed: 0, turned: false },
+                damage: DAMAGE_TABLE.ruby_executor_slash,
+                color: '#fb7185',
+                trail: [],
+              });
+            }
+            if (boss.phase === 2) {
+              this.projectiles.push({
+                x: cx,
+                y: cy - 12,
+                vx: -boss.facing * 290,
+                vy: -95,
+                r: 8.5,
+                life: 2.4,
+                fromEnemy: true,
+                boomerang: { originX: cx, originY: cy - 12, speed: 305, elapsed: 0, turned: false },
+                damage: DAMAGE_TABLE.ruby_executor_slash,
+                color: '#fde047',
+                trail: [],
+              });
+            }
+          } else if (r < 0.68) {
+            // Vertical Guillotine Vault & Drop Cleave onto player's X!
+            boss.state = 'cleave_jump';
+            boss.stateTimer = 0.72;
+            boss.vy = -510;
+            boss.vx = Math.max(-240, Math.min(240, (pcx - cx) * 1.35));
+            sound.playWarn();
+            this.addFloatingText(cx, boss.y - 18, 'EXECUTION CLEAVE!', '#f43f5e');
+          } else {
+            boss.state = 'halberd_warn';
+            boss.stateTimer = 0.48;
+            boss.vx = boss.facing * (boss.phase === 2 ? 510 : 445);
+            sound.playWarn();
+          }
+        }
+      } else if (boss.state === 'boomerang_cross') {
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          boss.state = 'patrol';
+          boss.stateTimer = 0.9;
+        }
+      } else if (boss.state === 'cleave_jump') {
+        boss.stateTimer -= dt;
+        boss.vy += 1180 * dt;
+        boss.x += boss.vx * dt;
+        boss.y += boss.vy * dt;
+        boss.x = Math.max(boss.arenaMinX + 26, Math.min(boss.arenaMaxX - boss.w - 26, boss.x));
+        if (boss.stateTimer <= 0 || boss.vy >= 0) {
+          boss.vx = 0;
+          boss.vy = 0;
+          boss.state = 'cleave_hover';
+          boss.stateTimer = 0.42;
+          sound.playWarn();
+        }
+      } else if (boss.state === 'cleave_hover') {
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          boss.state = 'cleave_drop';
+          boss.vy = 780;
+          boss.stateTimer = 1.2;
+          sound.playShieldClang();
+        }
+      } else if (boss.state === 'cleave_drop') {
+        boss.y += boss.vy * dt;
+        boss.stateTimer -= dt;
+        if (boss.y >= boss.floorY - boss.h || boss.stateTimer <= 0) {
+          boss.y = boss.floorY - boss.h;
+          boss.vy = 0;
+          this.addShake(7.2, 0.2);
+          sound.playExplosion();
+          // Twin Flanking Magma Geyser Columns either side of impact
+          for (const dir of [-1, 1]) {
+            const gx = Math.max(boss.arenaMinX + 38, Math.min(boss.arenaMaxX - 38, cx + dir * 115));
+            this.activeGroundSpikes.push({
+              x: gx,
+              floorY: boss.floorY,
+              timer: 0.62,
+              warnDuration: 0.62,
+              erupted: false,
+              radius: 23,
+              life: 0.45,
+              damage: DAMAGE_TABLE.magma_geyser,
+              color: '#f43f5e',
+            });
+            if (boss.phase === 2) {
+              const gx2 = Math.max(boss.arenaMinX + 38, Math.min(boss.arenaMaxX - 38, cx + dir * 235));
+              this.activeGroundSpikes.push({
+                x: gx2,
+                floorY: boss.floorY,
+                timer: 0.85,
+                warnDuration: 0.85,
+                erupted: false,
+                radius: 23,
+                life: 0.45,
+                damage: DAMAGE_TABLE.magma_geyser,
+                color: '#fb923c',
+              });
+            }
+          }
+          boss.state = 'patrol';
+          boss.stateTimer = 0.95;
+        }
+      } else if (boss.state === 'halberd_warn') {
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          boss.state = 'halberd_rush';
+          boss.stateTimer = 3.5;
+          sound.playShieldClang();
+        }
+      } else if (boss.state === 'halberd_rush') {
+        boss.x += boss.vx * dt;
+        boss.stateTimer -= dt;
+        if (Math.floor(boss.stateTimer * 4.5) !== Math.floor((boss.stateTimer + dt) * 4.5)) {
+          this.projectiles.push({
+            x: cx,
+            y: cy - 6,
+            vx: 0,
+            vy: -190,
+            r: 5.5,
+            life: 1.5,
+            fromEnemy: true,
+            gravity: 520,
+            damage: DAMAGE_TABLE.ruby_executor_slash,
+            color: '#fb923c',
+            trail: [],
+          });
+        }
+        if (boss.x <= boss.arenaMinX + 24 || boss.x + boss.w >= boss.arenaMaxX - 24 || boss.stateTimer <= 0) {
+          boss.x = Math.max(boss.arenaMinX + 24, Math.min(boss.arenaMaxX - boss.w - 24, boss.x));
+          boss.vx = 0;
+          boss.state = 'patrol';
+          boss.stateTimer = 0.85;
+        }
+      } else {
+        boss.state = 'patrol';
+        boss.stateTimer = 0.8;
+      }
+    } else if (boss.kind === 'furnace_titan') {
+      // ==================== 5-FORT2 BOSS (FURNACE TITAN: Split Slag Mortars + Dual-Height Piston Clap Shockwaves + Exhaust Steam March) ====================
+      const cx = boss.x + boss.w * 0.5;
+      const cy = boss.y + boss.h * 0.5;
+      boss.phase = boss.hp <= 8 ? 2 : 1;
+
+      if (boss.state === 'idle') {
+        boss.facing = pcx >= cx ? 1 : -1;
+        boss.vx = 0;
+        boss.y = boss.floorY - boss.h;
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          const r = Math.random();
+          if (r < 0.35) {
+            // Chest-Hatch 3-Arc Splitting Slag Mortars (Burst mid-air into 4 fiery fragments!)
+            boss.state = 'furnace_mortar';
+            boss.stateTimer = 1.05;
+            sound.playExplosion();
+            this.addFloatingText(cx, boss.y - 16, 'SLAG CLUSTER MORTAR!', '#fb923c');
+            for (const spd of [115, 225, 330]) {
+              this.projectiles.push({
+                x: cx + boss.facing * 12,
+                y: cy - 12,
+                vx: boss.facing * spd,
+                vy: -380,
+                r: 9,
+                life: 2.3,
+                fromEnemy: true,
+                gravity: 610,
+                splitTimer: 0.72,
+                splitCount: 4,
+                splitColor: '#fb923c',
+                splitDmg: DAMAGE_TABLE.furnace_titan_ember,
+                damage: DAMAGE_TABLE.furnace_titan_ember,
+                color: '#fde047',
+                trail: [],
+              });
+            }
+          } else if (r < 0.68) {
+            boss.state = 'piston_clap_warn';
+            boss.stateTimer = 0.54;
+            sound.playWarn();
+            this.addFloatingText(cx, boss.y - 16, 'DUAL PISTON CLAP!', '#f97316');
+          } else {
+            boss.state = 'steam_march_warn';
+            boss.stateTimer = 0.52;
+            boss.vx = boss.facing * (boss.phase === 2 ? 320 : 275);
+            sound.playWarn();
+            this.addFloatingText(cx, boss.y - 16, 'FURNACE STEAM MARCH!', '#fb7185');
+          }
+        }
+      } else if (boss.state === 'furnace_mortar') {
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          boss.state = 'idle';
+          boss.stateTimer = 0.88;
+        }
+      } else if (boss.state === 'piston_clap_warn') {
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          boss.state = 'piston_clap';
+          boss.stateTimer = 0.72;
+          this.addShake(7.8, 0.24);
+          sound.playExplosion();
+          // Launch dual-height horizontal shockwaves (low ankle wave + chest-height ring)
+          for (const dir of [-1, 1]) {
+            for (const [wy, spd] of [
+              [boss.floorY - 12, 315],
+              [boss.floorY - 76, 255],
+            ]) {
+              this.projectiles.push({
+                x: cx + dir * 24,
+                y: wy,
+                vx: dir * spd,
+                vy: 0,
+                r: 8,
+                life: 2.3,
+                fromEnemy: true,
+                damage: DAMAGE_TABLE.furnace_titan_ember,
+                color: wy < boss.floorY - 30 ? '#fde047' : '#f97316',
+                trail: [],
+              });
+            }
+          }
+          // Phase 2 adds twin edge-vent sky magma pillars
+          if (boss.phase === 2) {
+            for (const lx of [boss.arenaMinX + 68, boss.arenaMaxX - 68]) {
+              this.activeLightningStrikes.push({
+                x: lx,
+                floorY: boss.floorY,
+                timer: 0.85,
+                warnDuration: 0.85,
+                struck: false,
+                strikeRadius: 24,
+                strikeLife: 0.34,
+                damage: DAMAGE_TABLE.magma_geyser,
+                color: '#fb923c',
+              });
+            }
+          }
+        }
+      } else if (boss.state === 'piston_clap') {
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          boss.state = 'idle';
+          boss.stateTimer = 0.85;
+        }
+      } else if (boss.state === 'steam_march_warn') {
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          boss.state = 'steam_march';
+          boss.stateTimer = 3.8;
+          sound.playShieldClang();
+        }
+      } else if (boss.state === 'steam_march') {
+        boss.x += boss.vx * dt;
+        const prev = boss.stateTimer;
+        boss.stateTimer -= dt;
+        if (Math.floor(prev * 3.6) !== Math.floor(boss.stateTimer * 3.6)) {
+          // Chimney exhaust vents high arc embers upward while stomping wall-to-wall!
+          this.projectiles.push({
+            x: cx,
+            y: boss.y + 4,
+            vx: -Math.sign(boss.vx) * 85,
+            vy: -360,
+            r: 6.5,
+            life: 2.3,
+            fromEnemy: true,
+            gravity: 560,
+            damage: DAMAGE_TABLE.furnace_titan_ember,
+            color: '#fb923c',
+            trail: [],
+          });
+          this.addShake(3.2, 0.08);
+        }
+        if (boss.x <= boss.arenaMinX + 24 || boss.x + boss.w >= boss.arenaMaxX - 24 || boss.stateTimer <= 0) {
+          boss.x = Math.max(boss.arenaMinX + 24, Math.min(boss.arenaMaxX - boss.w - 24, boss.x));
+          boss.vx = 0;
+          boss.state = 'idle';
+          boss.stateTimer = 0.9;
+        }
+      } else {
+        boss.state = 'idle';
+        boss.stateTimer = 0.85;
+      }
+    } else if (boss.kind === 'scarlet_seraph') {
+      // ==================== 5-FORT3 ULTRA-STRONG DANMAKU BOSS (SCARLET SERAPH) ====================
+      const midX = (boss.arenaMinX + boss.arenaMaxX) * 0.5;
+      const cx = boss.x + boss.w * 0.5;
+      const cy = boss.y + boss.h * 0.5;
+      boss.phase = boss.hp <= 7 ? 3 : boss.hp <= 15 ? 2 : 1;
+      boss.facing = pcx >= cx ? 1 : -1;
+
+      if (boss.state === 'hover') {
+        const targetX = midX - boss.w * 0.5 + Math.sin(this.worldTime * 1.45) * 185;
+        const targetY = boss.floorY - 240 + Math.cos(this.worldTime * 2.1) * 44;
+        boss.x += (targetX - boss.x) * Math.min(1, dt * 4.5);
+        boss.y += (targetY - boss.y) * Math.min(1, dt * 4.5);
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          const r = Math.random();
+          if (r < 0.38) {
+            boss.state = 'spiral_rose';
+            boss.stateTimer = boss.phase === 3 ? 2.4 : 1.95;
+            boss.clones = [];
+          } else if (r < 0.68) {
+            boss.state = 'converge_halo';
+            boss.stateTimer = 0.95;
+            const ringCnt = boss.phase === 3 ? 12 : 9;
+            for (let k = 0; k < ringCnt; k++) {
+              const ang = (k * Math.PI * 2) / ringCnt;
+              const rx = cx + Math.cos(ang) * 98;
+              const ry = cy + Math.sin(ang) * 98;
+              const aim = Math.atan2(pcy - ry, pcx - rx);
+              this.projectiles.push({
+                x: rx,
+                y: ry,
+                vx: Math.cos(aim) * 285,
+                vy: Math.sin(aim) * 285,
+                r: 5.5,
+                life: 3.1,
+                fromEnemy: true,
+                pauseTimer: 0.72,
+                damage: DAMAGE_TABLE.scarlet_seraph_danmaku,
+                color: '#fde047',
+                trail: [],
+              });
+            }
+          } else {
+            boss.state = 'wing_sweep_warn';
+            boss.stateTimer = 0.5;
+            sound.playWarn();
+            const colCnt = boss.phase === 3 ? 6 : 4;
+            for (let k = 0; k < colCnt; k++) {
+              const lx = boss.arenaMinX + 54 + ((k + 0.5) / colCnt) * (boss.arenaMaxX - boss.arenaMinX - 108);
+              this.activeLightningStrikes.push({
+                x: lx,
+                floorY: boss.floorY,
+                timer: 0.95 + k * 0.08,
+                warnDuration: 0.95 + k * 0.08,
+                struck: false,
+                strikeRadius: 24,
+                strikeLife: 0.34,
+                damage: DAMAGE_TABLE.scarlet_seraph_laser,
+                color: '#f43f5e',
+              });
+            }
+          }
+        }
+      } else if (boss.state === 'spiral_rose') {
+        const prev = boss.stateTimer;
+        boss.stateTimer -= dt;
+        const prevWave = Math.floor(prev / 0.26);
+        const curWave = Math.floor(boss.stateTimer / 0.26);
+        if (curWave !== prevWave && boss.stateTimer > 0) {
+          const arms = boss.phase === 3 ? 14 : boss.phase === 2 ? 12 : 10;
+          const baseAng = this.worldTime * 2.6 + curWave * 0.38;
+          for (let k = 0; k < arms; k++) {
+            const ang = baseAng + (k * Math.PI * 2) / arms;
+            const spd = k % 2 === 0 ? 225 : 175;
+            this.projectiles.push({
+              x: cx,
+              y: cy,
+              vx: Math.cos(ang) * spd,
+              vy: Math.sin(ang) * spd,
+              r: 5.4,
+              life: 3.1,
+              fromEnemy: true,
+              damage: DAMAGE_TABLE.scarlet_seraph_danmaku,
+              color: k % 2 === 0 ? '#f43f5e' : '#fb7185',
+              trail: [],
+            });
+          }
+        }
+        if (boss.stateTimer <= 0) {
+          boss.state = 'hover';
+          boss.stateTimer = 1.05;
+        }
+      } else if (boss.state === 'converge_halo') {
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          boss.state = 'hover';
+          boss.stateTimer = 0.95;
+        }
+      } else if (boss.state === 'wing_sweep_warn') {
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          boss.state = 'wing_sweep';
+          boss.vx = boss.facing * (boss.phase === 3 ? 520 : 460);
+          boss.stateTimer = 3.5;
+          sound.playShieldClang();
+        }
+      } else if (boss.state === 'wing_sweep') {
+        boss.x += boss.vx * dt;
+        boss.y = boss.floorY - 128 + Math.sin(this.worldTime * 8) * 18;
+        boss.stateTimer -= dt;
+        if (Math.random() < 0.26) {
+          this.projectiles.push({
+            x: cx,
+            y: cy,
+            vx: -Math.sign(boss.vx) * 65,
+            vy: -135,
+            r: 5.2,
+            life: 2.3,
+            fromEnemy: true,
+            gravity: 310,
+            damage: DAMAGE_TABLE.scarlet_seraph_danmaku,
+            color: '#fb923c',
+            trail: [],
+          });
+        }
+        if (boss.x <= boss.arenaMinX + 24 || boss.x + boss.w >= boss.arenaMaxX - 24 || boss.stateTimer <= 0) {
+          boss.x = Math.max(boss.arenaMinX + 24, Math.min(boss.arenaMaxX - boss.w - 24, boss.x));
+          boss.vx = 0;
+          boss.state = 'hover';
+          boss.stateTimer = 1.0;
+        }
+      } else {
+        boss.state = 'hover';
+        boss.stateTimer = 1.0;
+      }
+      boss.x = Math.max(boss.arenaMinX + 20, Math.min(boss.arenaMaxX - boss.w - 20, boss.x));
+    } else if (boss.kind === 'crimson_sovereign') {
+      // ==================== 5-BOSS FINAL SOVEREIGN (3 FORMS — Zero Seraph Clone & Zero Warp!) ====================
+      const midX = (boss.arenaMinX + boss.arenaMaxX - boss.w) * 0.5;
+      const cx = boss.x + boss.w * 0.5;
+      const cy = boss.y + boss.h * 0.5;
+      const prevPhase = boss.phase;
+      boss.phase = boss.hp <= Math.ceil(boss.maxHp / 3) ? 3 : boss.hp <= Math.ceil((boss.maxHp * 2) / 3) ? 2 : 1;
+      if (boss.phase !== prevPhase) {
+        this.addFloatingText(
+          cx,
+          boss.y - 22,
+          boss.phase === 2 ? 'FORM II: GUILLOTINE CURTAIN!' : 'FORM III: IMPERIAL CROSS ECLIPSE!',
+          boss.phase === 3 ? '#fde047' : '#fb7185'
+        );
+        sound.playWarn();
+      }
+      boss.facing = pcx >= cx ? 1 : -1;
+
+      // Orbiting Imperial Guard Blades rendered as sovereign clones
+      const bladeCount = boss.phase === 3 ? 4 : boss.phase === 2 ? 3 : 2;
+      boss.clones = [];
+      for (let k = 0; k < bladeCount; k++) {
+        const ang = this.worldTime * 2.1 + (k * Math.PI * 2) / bladeCount;
+        boss.clones.push({
+          x: cx + Math.cos(ang) * 76,
+          y: cy + Math.sin(ang) * 52,
+          alpha: 0.95,
+        });
+      }
+
+      if (boss.state === 'hover') {
+        const targetX = midX + Math.cos(this.worldTime * (1.1 + boss.phase * 0.16)) * 210;
+        const targetY = boss.floorY - 215 + Math.sin(this.worldTime * 1.9) * 34;
+        boss.x += (targetX - boss.x) * Math.min(1, dt * 4.2);
+        boss.y += (targetY - boss.y) * Math.min(1, dt * 4.2);
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          const r = Math.random();
+          if (boss.phase === 1) {
+            if (r < 0.36) {
+              // Staggered Pincer Flanking Blades from both walls inward!
+              boss.state = 'cast_hold';
+              boss.stateTimer = 0.95;
+              this.addFloatingText(cx, boss.y - 16, 'ROYAL PINCER BLADES!', '#fb7185');
+              const heights = [boss.floorY - 24, boss.floorY - 72, boss.floorY - 120];
+              for (let k = 0; k < 3; k++) {
+                const fromLeft = k % 2 === 0;
+                const bx = fromLeft ? boss.arenaMinX + 34 : boss.arenaMaxX - 34;
+                this.projectiles.push({
+                  x: bx,
+                  y: heights[k],
+                  vx: fromLeft ? 305 : -305,
+                  vy: 0,
+                  r: 7.5,
+                  life: 2.9,
+                  fromEnemy: true,
+                  pauseTimer: 0.62 + k * 0.12,
+                  damage: DAMAGE_TABLE.crimson_sovereign_flare,
+                  color: '#fb7185',
+                  trail: [],
+                });
+              }
+            } else if (r < 0.7) {
+              // Triple Ricochet Crescent Slashes bouncing off arena geometry!
+              boss.state = 'cast_hold';
+              boss.stateTimer = 0.9;
+              const ang = Math.atan2(pcy - cy, pcx - cx);
+              for (const off of [-0.28, 0, 0.28]) {
+                this.projectiles.push({
+                  x: cx,
+                  y: cy,
+                  vx: Math.cos(ang + off) * 315,
+                  vy: Math.sin(ang + off) * 315,
+                  r: 7,
+                  life: 3.1,
+                  fromEnemy: true,
+                  ricochetLeft: 2,
+                  damage: DAMAGE_TABLE.crimson_sovereign_flare,
+                  color: '#fde047',
+                  trail: [],
+                });
+              }
+            } else {
+              boss.state = 'sov_rush_warn';
+              boss.stateTimer = 0.52;
+              boss.comboLeft = 0;
+              sound.playWarn();
+            }
+          } else if (boss.phase === 2) {
+            if (r < 0.42) {
+              // Sky Guillotine Curtain with 1 guaranteed Safe Gap Lane!
+              boss.state = 'cast_hold';
+              boss.stateTimer = 1.15;
+              sound.playWarn();
+              this.addFloatingText(cx, boss.y - 18, 'GUILLOTINE CURTAIN!', '#f43f5e');
+              const cols = 7;
+              const safeSlot = Math.floor(Math.random() * cols);
+              const span = boss.arenaMaxX - boss.arenaMinX - 112;
+              for (let k = 0; k < cols; k++) {
+                if (k === safeSlot) continue;
+                const bx = boss.arenaMinX + 56 + (k / (cols - 1)) * span;
+                this.projectiles.push({
+                  x: bx,
+                  y: boss.floorY - 310,
+                  vx: 0,
+                  vy: 295,
+                  r: 7.5,
+                  life: 2.5,
+                  fromEnemy: true,
+                  pauseTimer: 0.75,
+                  damage: DAMAGE_TABLE.crimson_sovereign_flare,
+                  color: k % 2 === 0 ? '#f43f5e' : '#fb923c',
+                  trail: [],
+                });
+              }
+            } else if (r < 0.74) {
+              boss.state = 'sov_rush_warn';
+              boss.stateTimer = 0.48;
+              boss.comboLeft = 1; // Double wall-to-wall rebound rush!
+              sound.playWarn();
+            } else {
+              boss.state = 'cast_hold';
+              boss.stateTimer = 0.95;
+              const ang = Math.atan2(pcy - cy, pcx - cx);
+              for (const off of [-0.36, -0.12, 0.12, 0.36]) {
+                this.projectiles.push({
+                  x: cx,
+                  y: cy,
+                  vx: Math.cos(ang + off) * 325,
+                  vy: Math.sin(ang + off) * 325,
+                  r: 7,
+                  life: 3.1,
+                  fromEnemy: true,
+                  ricochetLeft: 2,
+                  damage: DAMAGE_TABLE.crimson_sovereign_flare,
+                  color: '#fb7185',
+                  trail: [],
+                });
+              }
+            }
+          } else {
+            // Form 3: Rotating 4-Beam Imperial Cross Laser + Alternating Sky Pillars + Twin Halberd Rush
+            if (r < 0.44) {
+              boss.state = 'imperial_laser_warn';
+              boss.stateTimer = 0.85;
+              sound.playWarn();
+              this.addFloatingText(cx, boss.y - 22, 'IMPERIAL CROSS LASER!', '#fde047');
+            } else if (r < 0.74) {
+              boss.state = 'cast_hold';
+              boss.stateTimer = 1.05;
+              sound.playWarn();
+              const cols = 6;
+              for (let k = 0; k < cols; k++) {
+                const lx = boss.arenaMinX + 54 + ((k + 0.5) / cols) * (boss.arenaMaxX - boss.arenaMinX - 108);
+                const delay = 0.88 + (k % 2) * 0.44;
+                this.activeLightningStrikes.push({
+                  x: lx,
+                  floorY: boss.floorY,
+                  timer: delay,
+                  warnDuration: delay,
+                  struck: false,
+                  strikeRadius: 23,
+                  strikeLife: 0.36,
+                  damage: DAMAGE_TABLE.crimson_sovereign_beam,
+                  color: k % 2 === 0 ? '#f43f5e' : '#fde047',
+                });
+              }
+            } else {
+              boss.state = 'sov_rush_warn';
+              boss.stateTimer = 0.45;
+              boss.comboLeft = 1;
+              sound.playWarn();
+            }
+          }
+        }
+      } else if (boss.state === 'cast_hold') {
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          boss.state = 'hover';
+          boss.stateTimer = boss.phase === 3 ? 0.95 : 1.1;
+        }
+      } else if (boss.state === 'imperial_laser_warn') {
+        boss.x += (midX - boss.x) * Math.min(1, 5.5 * dt);
+        boss.y += (boss.floorY - 170 - boss.y) * Math.min(1, 5.5 * dt);
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          boss.state = 'imperial_laser';
+          boss.stateTimer = 2.75;
+          this.addShake(6.5, 0.2);
+          sound.playExplosion();
+        }
+      } else if (boss.state === 'imperial_laser') {
+        boss.x += (midX - boss.x) * Math.min(1, 4.5 * dt);
+        boss.y += (boss.floorY - 170 - boss.y) * Math.min(1, 4.5 * dt);
+        boss.stateTimer -= dt;
+        const baseRot = this.worldTime * 0.82;
+        if (p.invulnTimer <= 0) {
+          for (let k = 0; k < 4; k++) {
+            const ang = baseRot + (k * Math.PI) / 2;
+            const lx = cx + Math.cos(ang) * 230;
+            const ly = cy + Math.sin(ang) * 230;
+            if (this.distToSegment(pcx, pcy, cx, cy, lx, ly) < 12) {
+              this.damagePlayer(false, Math.sign(pcx - cx) || -1, DAMAGE_TABLE.crimson_sovereign_beam);
+              break;
+            }
+          }
+        }
+        if (boss.stateTimer <= 0) {
+          boss.state = 'hover';
+          boss.stateTimer = 1.05;
+        }
+      } else if (boss.state === 'sov_rush_warn') {
+        boss.y += (boss.floorY - 82 - boss.y) * Math.min(1, 6.0 * dt);
+        boss.stateTimer -= dt;
+        if (boss.stateTimer <= 0) {
+          boss.state = 'sov_rush';
+          boss.vx = boss.facing * (boss.phase === 3 ? 535 : 465);
+          boss.stateTimer = 3.5;
+          sound.playShieldClang();
+        }
+      } else if (boss.state === 'sov_rush') {
+        boss.x += boss.vx * dt;
+        boss.y = boss.floorY - 82;
+        boss.stateTimer -= dt;
+        if (Math.floor(boss.stateTimer * 4.2) !== Math.floor((boss.stateTimer + dt) * 4.2)) {
+          this.projectiles.push({
+            x: cx,
+            y: cy,
+            vx: -Math.sign(boss.vx) * 70,
+            vy: -210,
+            r: 5.5,
+            life: 1.6,
+            fromEnemy: true,
+            gravity: 540,
+            damage: DAMAGE_TABLE.crimson_sovereign_flare,
+            color: '#fde047',
+            trail: [],
+          });
+        }
+        const hitLeft = boss.vx < 0 && boss.x <= boss.arenaMinX + 24;
+        const hitRight = boss.vx > 0 && boss.x + boss.w >= boss.arenaMaxX - 24;
+        if (hitLeft || hitRight || boss.stateTimer <= 0) {
+          if ((hitLeft || hitRight) && (boss.comboLeft ?? 0) > 0 && boss.stateTimer > 0) {
+            boss.comboLeft = (boss.comboLeft ?? 1) - 1;
+            boss.x = hitLeft ? boss.arenaMinX + 26 : boss.arenaMaxX - boss.w - 26;
+            boss.vx = -boss.vx;
+            boss.facing = boss.vx > 0 ? 1 : -1;
+            boss.stateTimer = 3.5;
+            sound.playShieldClang();
+          } else {
+            boss.x = Math.max(boss.arenaMinX + 24, Math.min(boss.arenaMaxX - boss.w - 24, boss.x));
+            boss.vx = 0;
+            boss.state = 'hover';
+            boss.stateTimer = 1.05;
+          }
+        }
+      } else {
+        boss.state = 'hover';
+        boss.stateTimer = 1.0;
+      }
+      boss.x = Math.max(boss.arenaMinX + 20, Math.min(boss.arenaMaxX - boss.w - 20, boss.x));
     }
 
     // Player vs Boss collision (separate cleanly & grant stompGraceTimer to prevent self-damage!)
@@ -7678,6 +9702,16 @@ export class GameEngine {
         const bossDmg =
           boss.kind === 'overlord_core'
             ? DAMAGE_TABLE.overlord_core_contact
+            : boss.kind === 'crimson_sovereign'
+              ? DAMAGE_TABLE.crimson_sovereign_contact
+              : boss.kind === 'scarlet_seraph'
+                ? DAMAGE_TABLE.scarlet_seraph_contact
+                : boss.kind === 'furnace_titan'
+                  ? DAMAGE_TABLE.furnace_titan_contact
+                  : boss.kind === 'ruby_executor'
+                    ? DAMAGE_TABLE.ruby_executor_contact
+                    : boss.kind === 'scarlet_sentinel'
+                      ? DAMAGE_TABLE.scarlet_sentinel_contact
                       : boss.kind === 'glacies_emperor'
                         ? DAMAGE_TABLE.glacies_emperor_contact
                         : boss.kind === 'cocytus_core'
@@ -7729,7 +9763,13 @@ export class GameEngine {
       boss.kind === 'glacia_knight' ||
       boss.kind === 'cocytus_core' ||
       boss.kind === 'glacies_emperor';
-    const hitCol = isIce ? '#7dd3fc' : isEmerald ? '#34d399' : isGold ? '#fde047' : '#38f2ff';
+    const isCrimson =
+      boss.kind === 'scarlet_sentinel' ||
+      boss.kind === 'ruby_executor' ||
+      boss.kind === 'furnace_titan' ||
+      boss.kind === 'scarlet_seraph' ||
+      boss.kind === 'crimson_sovereign';
+    const hitCol = isCrimson ? '#fb7185' : isIce ? '#7dd3fc' : isEmerald ? '#34d399' : isGold ? '#fde047' : '#38f2ff';
     this.spawnParticles(boss.x + boss.w * 0.5, boss.y + boss.h * 0.5, 16, {
       color: hitCol,
       speedMin: 60,
@@ -7749,17 +9789,21 @@ export class GameEngine {
       this.activeLightningStrikes = [];
       this.activeGroundSpikes = [];
       this.score +=
-        boss.kind === 'glacies_emperor'
+        boss.kind === 'crimson_sovereign'
+          ? 4000
+          : boss.kind === 'scarlet_seraph'
+            ? 3500
+            : boss.kind === 'glacies_emperor'
               ? 3200
               : boss.kind === 'emerald_emperor'
                 ? 3000
-                : boss.kind === 'thunder_kronos'
+                : boss.kind === 'thunder_kronos' || boss.kind === 'furnace_titan'
                   ? 2500
-                  : boss.kind === 'archmage'
+                  : boss.kind === 'archmage' || boss.kind === 'ruby_executor'
                     ? 2000
                     : boss.kind === 'jade_chimera' || boss.kind === 'cocytus_core'
                       ? 1800
-                      : boss.kind === 'clockwork_core' || boss.kind === 'verdant_warden' || boss.kind === 'glacia_knight'
+                      : boss.kind === 'clockwork_core' || boss.kind === 'verdant_warden' || boss.kind === 'glacia_knight' || boss.kind === 'scarlet_sentinel'
                         ? 1500
                         : 1200;
       this.hitstopTimer = 0.09;
@@ -7767,7 +9811,7 @@ export class GameEngine {
       sound.playExplosion();
       this.addFloatingText(boss.x + boss.w * 0.5, boss.y - 12, 'BOSS DEFEATED!', '#34d399');
       this.spawnParticles(boss.x + boss.w * 0.5, boss.y + boss.h * 0.5, 42, {
-        color: isIce ? '#bae6fd' : isEmerald ? '#34d399' : isGold ? '#facc15' : '#38f2ff',
+        color: isCrimson ? '#fb7185' : isIce ? '#bae6fd' : isEmerald ? '#34d399' : isGold ? '#facc15' : '#38f2ff',
         speedMin: 80,
         speedMax: 320,
         angleMin: 0,
@@ -8397,7 +10441,147 @@ export class GameEngine {
       theme === 'glacial_fortress' ||
       theme === 'abyssal_trench' ||
       theme === 'frost_spire_citadel';
+    const isW5 =
+      theme === 'crimson_bastion' ||
+      theme === 'magma_foundry' ||
+      theme === 'ruby_rail' ||
+      theme === 'scarlet_cathedral' ||
+      theme === 'danmaku_sanctum' ||
+      theme === 'inferno_citadel';
+
     const skyGrad = ctx.createLinearGradient(0, 0, 0, this.viewH);
+    if (isW5) {
+      if (theme === 'magma_foundry') {
+        skyGrad.addColorStop(0, '#160406');
+        skyGrad.addColorStop(0.55, '#430b11');
+        skyGrad.addColorStop(1, '#7c1810');
+      } else if (theme === 'scarlet_cathedral' || theme === 'danmaku_sanctum') {
+        skyGrad.addColorStop(0, '#18030e');
+        skyGrad.addColorStop(0.55, '#4c0722');
+        skyGrad.addColorStop(1, '#881337');
+      } else if (theme === 'inferno_citadel') {
+        skyGrad.addColorStop(0, '#1a0305');
+        skyGrad.addColorStop(0.52, '#5c0912');
+        skyGrad.addColorStop(1, '#991b1b');
+      } else {
+        skyGrad.addColorStop(0, '#140508');
+        skyGrad.addColorStop(0.55, '#3b0a14');
+        skyGrad.addColorStop(1, '#6b1224');
+      }
+    } else if (theme === 'frozen_harbor') {
+      skyGrad.addColorStop(0, '#030b1c');
+      skyGrad.addColorStop(0.55, '#092246');
+      skyGrad.addColorStop(1, '#123e72');
+    } else if (theme === 'cryo_prism_maze') {
+      skyGrad.addColorStop(0, '#020c1b');
+      skyGrad.addColorStop(0.55, '#0a274d');
+      skyGrad.addColorStop(1, '#14447a');
+    } else if (theme === 'blizzard_gorge') {
+      skyGrad.addColorStop(0, '#051428');
+      skyGrad.addColorStop(0.55, '#0e335c');
+      skyGrad.addColorStop(1, '#1d558a');
+    } else if (theme === 'glacial_fortress') {
+      skyGrad.addColorStop(0, '#030816');
+      skyGrad.addColorStop(0.6, '#0b1e3d');
+      skyGrad.addColorStop(1, '#133566');
+    } else if (theme === 'abyssal_trench') {
+      skyGrad.addColorStop(0, '#010a18');
+      skyGrad.addColorStop(0.55, '#041f3a');
+      skyGrad.addColorStop(1, '#08375c');
+    } else if (theme === 'frost_spire_citadel') {
+      skyGrad.addColorStop(0, '#030d22');
+      skyGrad.addColorStop(0.52, '#0b2c59');
+      skyGrad.addColorStop(1, '#164d8f');
+    } else if (theme === 'emerald_canopy') {
+      skyGrad.addColorStop(0, '#03150e');
+      skyGrad.addColorStop(0.55, '#073120');
+      skyGrad.addColorStop(1, '#0e5236');
+    } else if (theme === 'jade_labyrinth') {
+      skyGrad.addColorStop(0, '#02100b');
+      skyGrad.addColorStop(0.55, '#06261b');
+      skyGrad.addColorStop(1, '#0b3e2b');
+    } else if (theme === 'verdant_fortress') {
+      skyGrad.addColorStop(0, '#060c09');
+      skyGrad.addColorStop(0.6, '#0d2318');
+      skyGrad.addColorStop(1, '#163b28');
+    } else if (theme === 'bio_spire_sky') {
+      skyGrad.addColorStop(0, '#041410');
+      skyGrad.addColorStop(0.55, '#0b3426');
+      skyGrad.addColorStop(1, '#15543e');
+    } else if (theme === 'golden_clocktower') {
+      skyGrad.addColorStop(0, '#1a0e03');
+      skyGrad.addColorStop(0.52, '#4b2507');
+      skyGrad.addColorStop(1, '#854d0e');
+    } else if (theme === 'gear_fortress') {
+      skyGrad.addColorStop(0, '#09090b');
+      skyGrad.addColorStop(0.6, '#181408');
+      skyGrad.addColorStop(1, '#2d2309');
+    } else if (theme === 'thunder_highway') {
+      skyGrad.addColorStop(0, '#140b03');
+      skyGrad.addColorStop(0.55, '#3b2106');
+      skyGrad.addColorStop(1, '#713f12');
+    } else if (theme === 'thunder_airship') {
+      skyGrad.addColorStop(0, '#120a04');
+      skyGrad.addColorStop(0.55, '#3a1a05');
+      skyGrad.addColorStop(1, '#582807');
+    } else if (theme === 'fortress_alert') {
+      skyGrad.addColorStop(0, '#14050b');
+      skyGrad.addColorStop(1, '#260b16');
+    } else if (theme === 'metro_dark') {
+      skyGrad.addColorStop(0, '#04060f');
+      skyGrad.addColorStop(1, '#0c1124');
+    } else if (theme === 'secret_vault') {
+      skyGrad.addColorStop(0, '#0b0a1f');
+      skyGrad.addColorStop(1, '#1d163a');
+    } else if (theme === 'arcane_library') {
+      skyGrad.addColorStop(0, '#0d0721');
+      skyGrad.addColorStop(1, '#1e1344');
+    } else if (theme === 'airship_boss') {
+      skyGrad.addColorStop(0, '#090b1d');
+      skyGrad.addColorStop(0.6, '#171c3a');
+      skyGrad.addColorStop(1, '#271e46');
+    } else {
+      skyGrad.addColorStop(0, '#050816');
+      skyGrad.addColorStop(0.58, '#0c1430');
+      skyGrad.addColorStop(1, '#17254a');
+    }
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, this.viewW, this.viewH);
+
+    if (isW5) {
+      // Blood-Eclipse Crimson Moon + Parallax Basalt Cathedrals + Rising Ember Motes
+      const orbX = this.viewW * 0.72 - (this.camX * 0.015) % 160;
+      const orbY = 100;
+      const orbGrad = ctx.createRadialGradient(orbX, orbY, 12, orbX, orbY, 96);
+      orbGrad.addColorStop(0, 'rgba(254, 205, 211, 0.85)');
+      orbGrad.addColorStop(0.45, 'rgba(244, 63, 94, 0.34)');
+      orbGrad.addColorStop(1, 'rgba(244, 63, 94, 0)');
+      ctx.fillStyle = orbGrad;
+      ctx.beginPath();
+      ctx.arc(orbX, orbY, 96, 0, Math.PI * 2);
+      ctx.fill();
+
+      for (let sx = (((-this.camX * 0.16) % 240) + 240) % 240 - 80; sx < this.viewW + 100; sx += 240) {
+        ctx.fillStyle = 'rgba(136, 19, 55, 0.28)';
+        ctx.beginPath();
+        ctx.moveTo(sx - 34, this.viewH);
+        ctx.lineTo(sx - 14, 155);
+        ctx.lineTo(sx, 118);
+        ctx.lineTo(sx + 14, 155);
+        ctx.lineTo(sx + 34, this.viewH);
+        ctx.closePath();
+        ctx.fill();
+      }
+      for (const m of this.libraryMotes) {
+        const mx = ((m.x - this.camX * 0.25) % (this.viewW + 60) + this.viewW + 60) % (this.viewW + 60) - 30;
+        ctx.fillStyle = 'rgba(251, 113, 133, 0.56)';
+        ctx.beginPath();
+        ctx.arc(mx + Math.sin(m.phase) * 10, m.y, m.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      return;
+    }
+
     if (isW4) {
       // Ice moon & aurora ribbons
       if (!this.level.underwaterStage) {
@@ -9122,6 +11306,58 @@ export class GameEngine {
         ctx.fillRect(p.x, p.y, p.w, 8);
         ctx.fillStyle = '#38bdf8';
         ctx.fillRect(p.x, p.y, p.w, 2.5);
+      } else if (p.style === 'crimson_steel') {
+        ctx.fillStyle = '#2a0812';
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.fillStyle = '#5c1124';
+        ctx.fillRect(p.x, p.y, p.w, 6);
+        ctx.fillStyle = '#f43f5e';
+        ctx.fillRect(p.x, p.y, p.w, 2.5);
+      } else if (p.style === 'magma_belt') {
+        ctx.fillStyle = '#330d09';
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.strokeStyle = '#fb923c';
+        ctx.lineWidth = 1.8;
+        ctx.strokeRect(p.x, p.y, p.w, p.h);
+        const dir = Math.sign(p.streamVx ?? 1) || 1;
+        const shift = ((this.worldTime * 80 * dir) % 18 + 18) % 18;
+        ctx.strokeStyle = '#fde047';
+        for (let cx = p.x + 8 + shift * 0.5; cx < p.x + p.w - 8; cx += 18) {
+          ctx.beginPath();
+          ctx.moveTo(cx - 4 * dir, p.y + 4);
+          ctx.lineTo(cx + 3 * dir, p.y + p.h * 0.5);
+          ctx.lineTo(cx - 4 * dir, p.y + p.h - 4);
+          ctx.stroke();
+        }
+      } else if (p.style === 'scarlet_bounce') {
+        ctx.fillStyle = '#4c0519';
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.strokeStyle = '#fb7185';
+        ctx.lineWidth = 2.2;
+        ctx.strokeRect(p.x, p.y, p.w, p.h);
+        ctx.fillStyle = '#fda4af';
+        ctx.fillRect(p.x + 4, p.y + 2, p.w - 8, 3);
+      } else if (p.style === 'ruby_glass') {
+        ctx.fillStyle = 'rgba(190, 18, 60, 0.34)';
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.strokeStyle = '#fda4af';
+        ctx.lineWidth = 1.8;
+        ctx.strokeRect(p.x, p.y, p.w, p.h);
+      } else if (p.style === 'ember_vanish') {
+        if (p.vanishState === 'gone') {
+          ctx.save();
+          ctx.setLineDash([4, 5]);
+          ctx.strokeStyle = 'rgba(251, 113, 133, 0.25)';
+          ctx.strokeRect(p.x, p.y, p.w, p.h);
+          ctx.restore();
+          continue;
+        }
+        const warn = p.vanishState === 'warning';
+        ctx.fillStyle = warn ? '#7f1d1d' : '#3b0714';
+        ctx.fillRect(p.x, p.y, p.w, p.h);
+        ctx.strokeStyle = warn && Math.floor(this.worldTime * 22) % 2 === 0 ? '#fde047' : '#f43f5e';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(p.x, p.y, p.w, p.h);
       } else if (p.style === 'gantry') {
         ctx.fillStyle = '#1e293b';
         ctx.fillRect(p.x, p.y, p.w, p.h);
@@ -9726,7 +11962,7 @@ export class GameEngine {
       } else {
         const alpha = Math.max(0, sp.life / 0.42);
         ctx.globalAlpha = alpha;
-        ctx.shadowColor = isIce ? '#7dd3fc' : '#34d399';
+        ctx.shadowColor = isCrimson ? '#fb7185' : isIce ? '#7dd3fc' : '#34d399';
         ctx.shadowBlur = 14;
         ctx.fillStyle = isCrimson ? '#be123c' : isIce ? '#0284c7' : '#10b981';
         ctx.strokeStyle = isCrimson ? '#fecdd3' : isIce ? '#e0f2fe' : '#a7f3d0';
@@ -11009,7 +13245,121 @@ export class GameEngine {
           ctx.stroke();
           break;
         }
-      ctx.restore();
+        case 'crimson_lancer': {
+          ctx.fillStyle = flash ? '#ffffff' : '#4c0519';
+          ctx.strokeStyle = en.chargeState === 'warn' ? '#fde047' : '#f43f5e';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(en.x, en.y, en.w, en.h, 6);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#fda4af';
+          ctx.beginPath();
+          const tipX = cx + en.facing * (en.w * 0.5 + 10);
+          ctx.moveTo(cx + en.facing * 4, cy - 5);
+          ctx.lineTo(tipX, cy);
+          ctx.lineTo(cx + en.facing * 4, cy + 5);
+          ctx.closePath();
+          ctx.fill();
+          break;
+        }
+        case 'magma_imp': {
+          ctx.fillStyle = flash ? '#ffffff' : '#7c2d12';
+          ctx.strokeStyle = '#fb923c';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.arc(cx, cy, en.w * 0.45, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#fde047';
+          ctx.fillRect(cx + en.facing * 3 - 2, cy - 3, 4, 4);
+          break;
+        }
+        case 'ruby_turret': {
+          ctx.fillStyle = flash ? '#ffffff' : '#3b0714';
+          ctx.strokeStyle = '#f43f5e';
+          ctx.lineWidth = 2;
+          ctx.fillRect(en.x, en.y + 6, en.w, en.h - 6);
+          ctx.strokeRect(en.x, en.y + 6, en.w, en.h - 6);
+          ctx.fillStyle = '#fb7185';
+          ctx.beginPath();
+          ctx.arc(cx, en.y + 8, 7, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+        }
+        case 'scarlet_reaper': {
+          ctx.fillStyle = flash ? '#ffffff' : '#3b0764';
+          ctx.strokeStyle = '#fb7185';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(en.x, en.y, en.w, en.h, 8);
+          ctx.fill();
+          ctx.stroke();
+          ctx.strokeStyle = '#fda4af';
+          ctx.lineWidth = 2.4;
+          ctx.beginPath();
+          ctx.arc(cx + en.facing * 10, cy - 4, 11, -0.8, 0.9);
+          ctx.stroke();
+          break;
+        }
+        case 'ember_bomber': {
+          ctx.fillStyle = flash ? '#ffffff' : '#431407';
+          ctx.strokeStyle = '#fb923c';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.roundRect(en.x, en.y, en.w, en.h, 7);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#f97316';
+          ctx.beginPath();
+          ctx.arc(cx, en.y + en.h, 5, 0, Math.PI * 2);
+          ctx.fill();
+          break;
+        }
+        case 'blood_mirror': {
+          ctx.fillStyle = flash ? '#ffffff' : '#4c0519';
+          ctx.strokeStyle = '#fda4af';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(en.x, en.y, en.w, en.h, 5);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#f43f5e';
+          ctx.fillRect(en.facing > 0 ? en.x + en.w - 3 : en.x - 4, en.y + 2, 7, en.h - 4);
+          break;
+        }
+        case 'inferno_wyvern': {
+          ctx.fillStyle = flash ? '#ffffff' : '#7f1d1d';
+          ctx.strokeStyle = '#fb923c';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx - 18, cy);
+          ctx.lineTo(cx, en.y);
+          ctx.lineTo(cx + 18, cy);
+          ctx.lineTo(cx, en.y + en.h);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          break;
+        }
+        case 'valkyrie_bit': {
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(this.worldTime * 3.5);
+          ctx.shadowColor = '#f43f5e';
+          ctx.shadowBlur = 12;
+          ctx.fillStyle = flash ? '#ffffff' : '#4c0519';
+          ctx.strokeStyle = '#fde047';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(0, -14);
+          ctx.lineTo(13, 0);
+          ctx.lineTo(0, 14);
+          ctx.lineTo(-13, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
           break;
         }
       }
@@ -11566,7 +13916,140 @@ export class GameEngine {
       ctx.beginPath();
       ctx.arc(cx, cy - 6, 9, 0, Math.PI * 2);
       ctx.fill();
-    } else {        if (boss.state === 'imperial_laser_warn' || boss.state === 'imperial_laser') {
+    } else if (
+      boss.kind === 'scarlet_sentinel' ||
+      boss.kind === 'ruby_executor' ||
+      boss.kind === 'furnace_titan' ||
+      boss.kind === 'scarlet_seraph' ||
+      boss.kind === 'crimson_sovereign'
+    ) {
+      const cx = boss.x + boss.w * 0.5;
+      const cy = boss.y + boss.h * 0.5;
+      ctx.shadowColor = boss.kind === 'scarlet_seraph' ? '#fde047' : boss.kind === 'furnace_titan' ? '#fb923c' : '#f43f5e';
+      ctx.shadowBlur = boss.kind === 'scarlet_seraph' || boss.kind === 'crimson_sovereign' ? 24 : 18;
+
+      if (boss.kind === 'scarlet_sentinel') {
+        // Chamfered scarlet bunker armor + twin shoulder pods
+        if (boss.state === 'dash_warn') {
+          ctx.save();
+          ctx.strokeStyle = '#fda4af';
+          ctx.lineWidth = 2.6;
+          ctx.setLineDash([8, 5]);
+          ctx.beginPath();
+          ctx.moveTo(boss.arenaMinX + 24, cy);
+          ctx.lineTo(boss.arenaMaxX - 24, cy);
+          ctx.stroke();
+          ctx.restore();
+        }
+        ctx.fillStyle = flash ? '#ffffff' : '#450a0a';
+        ctx.strokeStyle = boss.phase >= 2 ? '#fde047' : '#f87171';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.roundRect(boss.x, boss.y, boss.w, boss.h, 9);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#f43f5e';
+        ctx.fillRect(boss.x - 5, boss.y + 8, 6, 18);
+        ctx.fillRect(boss.x + boss.w - 1, boss.y + 8, 6, 18);
+        ctx.fillStyle = '#fecaca';
+        ctx.fillRect(cx - 12, boss.y + 14, 24, 5);
+      } else if (boss.kind === 'ruby_executor') {
+        // Hexagonal Executioner Silhouette + Twin Spinning Crescent Halberd Blades + Drop Cleave Telegraph
+        if (boss.state === 'cleave_hover') {
+          ctx.save();
+          ctx.fillStyle = 'rgba(244, 63, 94, 0.24)';
+          ctx.fillRect(boss.x - 4, boss.y + boss.h, boss.w + 8, boss.floorY - (boss.y + boss.h));
+          ctx.restore();
+        }
+        ctx.fillStyle = flash ? '#ffffff' : '#3b0712';
+        ctx.strokeStyle = boss.phase >= 2 ? '#fde047' : '#fb7185';
+        ctx.lineWidth = 2.6;
+        ctx.beginPath();
+        ctx.moveTo(cx, boss.y - 4);
+        ctx.lineTo(boss.x + boss.w, cy - 6);
+        ctx.lineTo(boss.x + boss.w - 7, boss.y + boss.h);
+        ctx.lineTo(boss.x + 7, boss.y + boss.h);
+        ctx.lineTo(boss.x, cy - 6);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = '#fecdd3';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(boss.x - 4, cy - 2, 12, Math.PI * 0.4, Math.PI * 1.6);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(boss.x + boss.w + 4, cy - 2, 12, -Math.PI * 0.6, Math.PI * 0.6);
+        ctx.stroke();
+        ctx.fillStyle = '#fde047';
+        ctx.beginPath();
+        ctx.arc(cx, cy - 8, 7, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (boss.kind === 'furnace_titan') {
+        // Broad Industrial Blast-Furnace Juggernaut + Glowing Smelter Grate + Piston Gauntlets
+        const pOff = boss.state === 'piston_clap_warn' ? 14 : 4;
+        ctx.fillStyle = '#7c2d12';
+        ctx.fillRect(boss.x + 6, boss.y - 10, 10, 12);
+        ctx.fillRect(boss.x + boss.w - 16, boss.y - 10, 10, 12);
+        ctx.fillStyle = flash ? '#ffffff' : '#431407';
+        ctx.strokeStyle = '#fb923c';
+        ctx.lineWidth = 2.8;
+        ctx.beginPath();
+        ctx.roundRect(boss.x, boss.y, boss.w, boss.h, 7);
+        ctx.fill();
+        ctx.stroke();
+        // Piston gauntlets
+        ctx.fillStyle = '#fb923c';
+        ctx.fillRect(boss.x - 8 - pOff, cy - 10, 10, 24);
+        ctx.fillRect(boss.x + boss.w - 2 + pOff, cy - 10, 10, 24);
+        // Glowing furnace core grate
+        ctx.fillStyle = '#fde047';
+        ctx.beginPath();
+        ctx.arc(cx, cy + 4, 11, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(cx - 14, boss.y + 10, 28, 6);
+      } else if (boss.kind === 'scarlet_seraph') {
+        // Radiant 6-wing danmaku aura & spinning golden magic ring
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.strokeStyle = 'rgba(253, 224, 71, 0.72)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([7, 5]);
+        ctx.rotate(this.worldTime * 2.2);
+        ctx.beginPath();
+        ctx.arc(0, 0, 52, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        for (const sgn of [-1, 1]) {
+          for (let w = 0; w < 3; w++) {
+            const ang = sgn * (0.28 + w * 0.35) + Math.sin(this.worldTime * 5 + w) * 0.1;
+            ctx.fillStyle = 'rgba(244, 63, 94, 0.45)';
+            ctx.beginPath();
+            ctx.ellipse(Math.cos(ang) * sgn * 38, Math.sin(ang) * 26 - 8, 22, 7, ang, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        ctx.restore();
+        ctx.fillStyle = flash ? '#ffffff' : '#4c0519';
+        ctx.strokeStyle = boss.phase >= 2 ? '#fde047' : '#fb7185';
+        ctx.lineWidth = 2.6;
+        ctx.beginPath();
+        ctx.moveTo(cx, boss.y - 4);
+        ctx.lineTo(boss.x + boss.w, cy);
+        ctx.lineTo(cx + 12, boss.y + boss.h);
+        ctx.lineTo(cx - 12, boss.y + boss.h);
+        ctx.lineTo(boss.x, cy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#fecdd3';
+        ctx.beginPath();
+        ctx.arc(cx, cy - 6, 8, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // crimson_sovereign: Royal Crowned Emperor Pentagon + Orbiting Imperial Blades + Imperial Cross Laser!
+        if (boss.state === 'imperial_laser_warn' || boss.state === 'imperial_laser') {
           const baseRot = this.worldTime * 0.82;
           ctx.save();
           for (let k = 0; k < 4; k++) {
@@ -12400,6 +14883,108 @@ export class GameEngine {
       ctx.restore();
     }
 
+    // World 5 Magma Geysers
+    for (const mg of this.level.magmaGeysers ?? []) {
+      if (mg.x + mg.w < this.camX - 40 || mg.x > this.camX + this.viewW + 40) continue;
+      const cyc = mg.cyclePeriod || 3.4;
+      const t = (((this.worldTime + mg.phase) % cyc) + cyc) % cyc;
+      const erupting = t >= cyc - mg.activeDuration;
+      const warn = !erupting && t >= cyc - mg.activeDuration - 0.55;
+      ctx.save();
+      ctx.fillStyle = '#7c2d12';
+      ctx.fillRect(mg.x, mg.y - 6, mg.w, 8);
+      if (warn) {
+        ctx.fillStyle = 'rgba(251, 146, 60, 0.32)';
+        ctx.fillRect(mg.x + 2, mg.y - 16, mg.w - 4, 14);
+      } else if (erupting) {
+        const g = ctx.createLinearGradient(0, mg.y - mg.maxHeight, 0, mg.y);
+        g.addColorStop(0, 'rgba(251, 146, 60, 0.35)');
+        g.addColorStop(1, 'rgba(239, 68, 68, 0.88)');
+        ctx.fillStyle = g;
+        ctx.shadowColor = '#f97316';
+        ctx.shadowBlur = 16;
+        ctx.fillRect(mg.x, mg.y - mg.maxHeight, mg.w, mg.maxHeight);
+      }
+      ctx.restore();
+    }
+
+    // World 5 Crimson Pendulum Halberds
+    for (const pb of this.level.pendulumBlades ?? []) {
+      if (pb.cx < this.camX - 240 || pb.cx > this.camX + this.viewW + 240) continue;
+      const ang = Math.sin(this.worldTime * pb.speed + pb.phase) * pb.maxAngle;
+      const bx = pb.cx + Math.sin(ang) * pb.length;
+      const by = pb.cy + Math.cos(ang) * pb.length;
+      ctx.save();
+      ctx.strokeStyle = '#fb7185';
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.moveTo(pb.cx, pb.cy);
+      ctx.lineTo(bx, by);
+      ctx.stroke();
+      ctx.translate(bx, by);
+      ctx.rotate(-ang);
+      ctx.fillStyle = '#4c0519';
+      ctx.strokeStyle = '#fda4af';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-22, -6);
+      ctx.lineTo(22, -6);
+      ctx.lineTo(14, 14);
+      ctx.lineTo(-14, 14);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // World 5 Danmaku Geometric Emitters
+    for (const de of this.level.danmakuEmitters ?? []) {
+      if (de.x < this.camX - 40 || de.x > this.camX + this.viewW + 40) continue;
+      ctx.save();
+      ctx.translate(de.x, de.y);
+      ctx.rotate(this.worldTime * 2.2);
+      ctx.shadowColor = '#f43f5e';
+      ctx.shadowBlur = 14;
+      ctx.fillStyle = '#4c0519';
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let k = 0; k < 6; k++) {
+        const a = (k * Math.PI) / 3;
+        const rad = k % 2 === 0 ? 13 : 9;
+        if (k === 0) ctx.moveTo(Math.cos(a) * rad, Math.sin(a) * rad);
+        else ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // World 5 Scarlet Directional Slings
+    for (const ss of this.level.scarletSlings ?? []) {
+      if (ss.x < this.camX - 40 || ss.x > this.camX + this.viewW + 40) continue;
+      const ang = Math.atan2(ss.launchVy, ss.launchVx);
+      ctx.save();
+      ctx.translate(ss.x, ss.y);
+      ctx.shadowColor = '#f43f5e';
+      ctx.shadowBlur = ss.cooldown && ss.cooldown > 0 ? 20 : 12;
+      ctx.strokeStyle = ss.cooldown && ss.cooldown > 0 ? '#fde047' : '#fb7185';
+      ctx.lineWidth = 2.8;
+      ctx.beginPath();
+      ctx.arc(0, 0, ss.r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.rotate(ang);
+      ctx.fillStyle = '#fda4af';
+      ctx.beginPath();
+      ctx.moveTo(10, 0);
+      ctx.lineTo(-6, -6);
+      ctx.lineTo(-3, 0);
+      ctx.lineTo(-6, 6);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
   }
 
   private renderMetroDarkness() {
